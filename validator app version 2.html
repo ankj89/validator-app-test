@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Site Validation Tool</title>
+
+<script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+
+<style>
+body{font-family:Arial;margin:0;background:#f4f6fb}
+header{background:#1e3d8f;color:white;padding:14px;font-size:18px}
+.container{padding:14px;max-width:1200px;margin:auto}
+.card{background:white;padding:16px;margin-bottom:14px;border-radius:8px;border:1px solid #ddd}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+input,select,textarea{width:100%;padding:8px;border-radius:6px;border:1px solid #ccc}
+textarea{height:60px}
+.sectionHeader{background:#eef2ff;padding:8px;border-radius:6px;margin-top:14px;font-weight:bold}
+button{padding:10px 16px;border:none;background:#1e3d8f;color:white;border-radius:6px;margin:4px;cursor:pointer}
+.roomTab{display:inline-block;padding:8px 12px;border:1px solid #ccc;margin:3px;border-radius:6px;cursor:pointer}
+.question{margin-bottom:12px}
+.wallBox{display:flex;gap:12px;margin:6px 0;flex-wrap:wrap}
+.wallBox label{display:flex;align-items:center;gap:4px;font-size:13px}
+</style>
+</head>
+
+<body>
+
+<header>Site Validation Tool</header>
+
+<div class="container">
+
+<div class="card">
+<h3>Preliminary Project Details</h3>
+<div class="grid">
+<input id="pid" placeholder="PID" onchange="saveData()">
+<input id="cx" placeholder="Cx Name" onchange="saveData()">
+<input id="city" placeholder="City" onchange="saveData()">
+<input id="address" placeholder="Address" onchange="saveData()">
+<input id="society" placeholder="Society Name" onchange="saveData()">
+<input id="flat" placeholder="Flat No" onchange="saveData()">
+<input id="floorNo" placeholder="Floor No" onchange="saveData()">
+</div>
+</div>
+
+<div class="card">
+<h3>Society Constraints</h3>
+<div class="grid">
+<select id="serviceLiftUsage" onchange="saveData()">
+<option value="">Service lift usage allowed?</option>
+<option>Heavy material movement allowed</option>
+<option>Heavy material movement Not allowed</option>
+</select>
+
+<select id="loadingArea" onchange="saveData()">
+<option value="">Debris loading area</option>
+<option>Within 30 ft</option>
+<option>More than 30 ft</option>
+<option>Not present</option>
+</select>
+
+<select id="debrisDumping" onchange="saveData()">
+<option value="">Debris dumping allowed?</option>
+<option>Yes</option>
+<option>No</option>
+</select>
+
+<select id="vehicleEntry" onchange="saveData()">
+<option value="">Vehicle entry possible?</option>
+<option>Yes</option>
+<option>No</option>
+</select>
+
+<textarea id="societyRestrictions" placeholder="Society Restrictions" onchange="saveData()"></textarea>
+</div>
+</div>
+
+<div class="card">
+<div id="roomTabs"></div>
+<button onclick="addRoom()">Add Room</button>
+<button onclick="resetData()">Reset Data</button>
+</div>
+
+<div class="card" id="roomForm"></div>
+
+<div class="card">
+<button onclick="generateExcel()">Generate Excel</button>
+</div>
+
+</div>
+
+<script>
+
+const walls=["NW","EW","SW","WW"]
+
+const roomQuestions = ["Is there a requirement of PCC due to leveling issues/bare shell property?",
+"Existing flooring in Good condition with with proper slope/levels?",
+"Can we do tile on tile installation?",
+"Is there sufficient height or clearance between the existing ceiling and any obstructions (such as beams, HVAC systems, or lighting fixtures) to accommodate the false ceiling installation?",
+"Are there visible undulations/uneven surface on the True Ceiling?",
+"Is there any evidence of water leaks or moisture damage on the existing true ceiling?",
+"Are the dimensions of the space suitable for accommodating a sliding door system?",
+"Can we changes to the size, shape, or location of the windows?",
+"Are the existing windows and window frames in poor condition, damaged, rot, instability etc",
+"Is there a possibility to relocate from one wall to another?",
+"Is there any 15 Amp power Supply present in the room?",
+"Are there any issues with the existing plumbing lines, such as leaks, corrosion, blockages, or inadequate capacity, that require replacement or repair?",
+"Are existing plumbing lines old and outdated and may not be compatible with modern fixtures?",
+"Is the main inlet valve accesible?",
+"Is there sufficent space to provide Shower cubicle?",
+"Is it possible to relocate the WC, without any modifications to external pipeline/drain line?",
+"Do we need to provide damp proof treament on walls?",
+"Do we need to provide weather proof treatment on walls which are exposed to external atmosphere?",
+"Is there existing countertop present?",
+"Are there any issues with the existing false ceiling, such as damage, sagging, or instability, that require removal and replacement?"];
+
+const wallQuestions = ["Is the wall a load-bearing wall/Mivan Construction/Sheer wall?",
+"Is the wall dry wall/Gypsum wall?",
+"Are there major cracks that require structural repair?",
+"Does the existing wall surface have undulations or uneven surface, requiring leveling?",
+"Are the undulation more than 6 mm?",
+"Are there minor cracks/loose plaster requiring re plastering??",
+"Is there suitable location for core cut available?",
+"Are existing switch/socket in working condition?",
+"Can we re-use the existing module/switch board?",
+"Can split AC be installed post false ceiling w/o pockets?",
+"Is panelling/pelmet required to be done for AC installation?",
+"Are there any darker shade on the wall?",
+"Is the existing paint in good condition, without excessive peeling, flaking, or bubbling?",
+"Do we need to remove skirting for wardrobe installlation?"];
+
+const defaultRooms=["Living Room","Kitchen","Bedroom 1","Bedroom 2","Bathroom 1","Bathroom 2","Balcony"]
+
+let roomOrder=[...defaultRooms]
+
+let data=JSON.parse(localStorage.getItem("validatorData")||"{}")
+
+/* 🔧 DATA NORMALIZATION (CRITICAL FIX) */
+function normalizeData(){
+if(!data.project) data.project={}
+if(!data.constraints) data.constraints={}
+if(!data.rooms) data.rooms={}
+
+defaultRooms.forEach(r=>{
+if(!data.rooms[r]) data.rooms[r]={}
+if(!data.rooms[r].room) data.rooms[r].room={}
+if(!data.rooms[r].wall) data.rooms[r].wall={}
+if(!data.rooms[r].wallSel) data.rooms[r].wallSel={}
+})
+}
+
+normalizeData()
+
+function saveData(){
+
+data.project={
+pid:document.getElementById("pid").value,
+cx:document.getElementById("cx").value,
+city:document.getElementById("city").value,
+address:document.getElementById("address").value,
+society:document.getElementById("society").value,
+flat:document.getElementById("flat").value,
+floorNo:document.getElementById("floorNo").value
+}
+
+data.constraints={
+serviceLiftUsage:document.getElementById("serviceLiftUsage").value,
+loadingArea:document.getElementById("loadingArea").value,
+debrisDumping:document.getElementById("debrisDumping").value,
+vehicleEntry:document.getElementById("vehicleEntry").value,
+societyRestrictions:document.getElementById("societyRestrictions").value
+}
+
+localStorage.setItem("validatorData",JSON.stringify(data))
+}
+
+function renderTabs(activeRoom){
+document.getElementById("roomTabs").innerHTML=
+roomOrder.map(r=>`
+<span class="roomTab" 
+style="${r===activeRoom?'background:#1e3d8f;color:white':''}"
+onclick="openRoom('${r}')">${r}</span>`).join("")
+}
+
+function openRoom(room){
+
+/* 🔧 HARDENED STRUCTURE */
+if(!data.rooms[room]) data.rooms[room]={}
+if(!data.rooms[room].room) data.rooms[room].room={}
+if(!data.rooms[room].wall) data.rooms[room].wall={}
+if(!data.rooms[room].wallSel) data.rooms[room].wallSel={}
+
+const r=data.rooms[room]
+
+renderTabs(room)
+
+const container=document.getElementById("roomForm")
+container.innerHTML=""
+
+let title=document.createElement("h3")
+title.textContent=room
+container.appendChild(title)
+
+container.appendChild(sectionHeader("Wall Questions"))
+
+wallQuestions.forEach(q=>{
+let div=document.createElement("div")
+div.className="question"
+
+let label=document.createElement("label")
+label.textContent=q
+
+let select=createYesNo(r.wall[q], val=>{
+r.wall[q]=val
+saveData()
+})
+
+let wallBox=document.createElement("div")
+wallBox.className="wallBox"
+
+walls.forEach(w=>{
+let lbl=document.createElement("label")
+let cb=document.createElement("input")
+cb.type="checkbox"
+
+let arr=r.wallSel[q]||[]
+cb.checked=arr.includes(w)
+
+cb.onchange=()=>{
+let arr=r.wallSel[q]||[]
+if(cb.checked){
+if(!arr.includes(w)) arr.push(w)
+}else{
+arr=arr.filter(x=>x!==w)
+}
+r.wallSel[q]=arr
+saveData()
+}
+
+lbl.appendChild(cb)
+lbl.append(w)
+wallBox.appendChild(lbl)
+})
+
+let textarea=createTextarea(r.wall[q+"-c"], val=>{
+r.wall[q+"-c"]=val
+saveData()
+})
+
+div.append(label,select,wallBox,textarea)
+container.appendChild(div)
+})
+
+container.appendChild(sectionHeader("Room Questions"))
+
+roomQuestions.forEach(q=>{
+let div=document.createElement("div")
+
+let label=document.createElement("label")
+label.textContent=q
+
+let select=createYesNo(r.room[q], val=>{
+r.room[q]=val
+saveData()
+})
+
+let textarea=createTextarea(r.room[q+"-c"], val=>{
+r.room[q+"-c"]=val
+saveData()
+})
+
+div.append(label,select,textarea)
+container.appendChild(div)
+})
+
+}
+
+function sectionHeader(text){
+let el=document.createElement("div")
+el.className="sectionHeader"
+el.textContent=text
+return el
+}
+
+function createYesNo(value,onchange){
+let select=document.createElement("select")
+select.innerHTML="<option></option><option>Yes</option><option>No</option>"
+select.value=value||""
+select.onchange=()=>onchange(select.value)
+return select
+}
+
+function createTextarea(value,onchange){
+let t=document.createElement("textarea")
+t.value=value||""
+t.onchange=()=>onchange(t.value)
+return t
+}
+
+function generateExcel(){
+
+// Ensure latest values are saved before export
+saveData()
+
+let rows=[]
+
+Object.keys(data.rooms).forEach(room=>{
+let r=data.rooms[room]
+
+Object.entries(r.wall).forEach(([k,v])=>{
+if(k.endsWith("-c")) return
+
+rows.push({
+...data.project,
+...data.constraints,
+Room:room,
+Section:"Wall",
+Item:k,
+Value:v,
+Walls:(r.wallSel[k]||[]).join(","),
+Comments:r.wall[k+"-c"]||""
+})
+})
+
+Object.entries(r.room).forEach(([k,v])=>{
+if(k.endsWith("-c")) return
+
+rows.push({
+...data.project,
+...data.constraints,
+Room:room,
+Section:"Room",
+Item:k,
+Value:v,
+Comments:r.room[k+"-c"]||""
+})
+})
+
+})
+
+let wb=XLSX.utils.book_new()
+let ws=XLSX.utils.json_to_sheet(rows)
+
+XLSX.utils.book_append_sheet(wb,ws,"Validation Data")
+XLSX.writeFile(wb,"site_validation.xlsx")
+}
+function addRoom(){
+let name=prompt("Room name")
+if(!name)return
+roomOrder.push(name)
+data.rooms[name]={room:{},wall:{},wallSel:{}}
+renderTabs(name)
+}
+
+function resetData(){
+localStorage.clear()
+location.reload()
+}
+
+/* INIT */
+document.addEventListener("DOMContentLoaded", function(){
+normalizeData()
+renderTabs(defaultRooms[0])
+openRoom(defaultRooms[0])
+})
+
+</script>
+
+</body>
+</html>
