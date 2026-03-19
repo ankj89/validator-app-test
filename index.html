@@ -258,6 +258,7 @@ container.appendChild(content)
 return content
 }
 
+/* WALL */
 let wallSection=createAccordion("Wall Questions")
 
 wallSection.innerHTML+=`
@@ -287,6 +288,7 @@ let cb=document.createElement("input")
 cb.type="checkbox"
 let arr=r.wallSel[q]||[]
 cb.checked=arr.includes(w)
+
 cb.onchange=()=>{
 let arr=r.wallSel[q]||[]
 if(cb.checked){if(!arr.includes(w))arr.push(w)}
@@ -304,26 +306,12 @@ div.append(label,toggle,wallBox,textarea)
 wallSection.appendChild(div)
 })
 
+/* ROOM */
 let roomSection=createAccordion("Room Questions")
 
 roomQuestions.forEach(q=>{
 let div=document.createElement("div")
 div.className="questionBlock "+(r.room[q]?"statusAnswered":"statusPending")
-let index = roomOrder.indexOf(room)
-
-let nextBtn=document.createElement("button")
-
-if(index === roomOrder.length - 1){
-nextBtn.innerText="Finish ✔"
-}else{
-nextBtn.innerText=`Next: ${roomOrder[index+1]} →`
-}
-
-nextBtn.style.marginTop="10px"
-
-nextBtn.onclick=()=>goToNextRoom(room)
-
-container.appendChild(nextBtn)
 
 let label=document.createElement("label")
 label.textContent=q
@@ -341,6 +329,23 @@ textarea.value=r.room[q+"-c"]||""
 div.append(label,toggle,textarea)
 roomSection.appendChild(div)
 })
+
+/* ✅ NEXT ROOM BUTTON (CORRECT PLACE) */
+let index = roomOrder.indexOf(room)
+
+let nextBtn=document.createElement("button")
+
+if(index === roomOrder.length - 1){
+nextBtn.innerText="Finish ✔"
+}else{
+nextBtn.innerText=`Next: ${roomOrder[index+1]} →`
+}
+
+nextBtn.style.marginTop="10px"
+
+nextBtn.onclick=()=>goToNextRoom(room)
+
+container.appendChild(nextBtn)
 
 }
 
