@@ -66,8 +66,8 @@ button{padding:8px 12px;border:none;background:#1e3d8f;color:white;border-radius
 
 <div class="card">
 <h3>Society Constraints</h3>
-
-<div style="display:flex;flex-direction:column;gap:12px;">
+<div id="societyForm" style="display:flex;flex-direction:column;gap:8px;"></div>
+</div>
 
 <div>
 <label>Service lift usage allowed?</label>
@@ -132,7 +132,13 @@ button{padding:8px 12px;border:none;background:#1e3d8f;color:white;border-radius
 </div>
 
 <script>
-
+const societyQuestions = [
+{key:"serviceLiftUsage", label:"Service lift usage allowed?", icon:"🛗", options:["Heavy material movement allowed","Heavy material movement Not allowed"]},
+{key:"loadingArea", label:"Debris loading area", icon:"🚚", options:["Within 30 ft","More than 30 ft","Not present"]},
+{key:"debrisDumping", label:"Debris dumping allowed?", icon:"🗑️", options:["Yes","No"]},
+{key:"vehicleEntry", label:"Vehicle entry possible?", icon:"🚗", options:["Yes","No"]},
+{key:"societyRestrictions", label:"Society Restrictions", icon:"📝", type:"textarea"}
+]
 const walls=["NW","EW","SW","WW"]
 
 const roomQuestions=["Is there a requirement of PCC due to leveling issues/bare shell property?",
@@ -185,7 +191,12 @@ normalizeData()
 
 function saveData(){
 data.project={pid:pid.value,cx:cx.value,city:city.value,address:address.value,society:society.value,flat:flat.value,floorNo:floorNo.value}
-data.constraints={serviceLiftUsage:serviceLiftUsage.value,loadingArea:loadingArea.value,debrisDumping:debrisDumping.value,vehicleEntry:vehicleEntry.value,societyRestrictions:societyRestrictions.value}
+data.constraints={}
+
+societyQuestions.forEach(q=>{
+let el=document.getElementById(q.key)
+if(el) data.constraints[q.key]=el.value
+})
 localStorage.setItem("validatorData",JSON.stringify(data))
 }
 
@@ -410,7 +421,40 @@ openRoom(nextRoom)
 // Scroll to top
 window.scrollTo({top:0,behavior:"smooth"})
 }
+function renderSociety(){
 
+const container=document.getElementById("societyForm")
+container.innerHTML=""
+
+societyQuestions.forEach(q=>{
+
+let div=document.createElement("div")
+div.className="formGroup"
+
+let label=document.createElement("label")
+label.className="formLabel"
+label.innerHTML=`<span class="formIcon">${q.icon}</span>${q.label}`
+
+let input
+
+if(q.type==="textarea"){
+input=document.createElement("textarea")
+}else{
+input=document.createElement("select")
+input.innerHTML="<option></option>" + q.options.map(o=>`<option>${o}</option>`).join("")
+}
+
+input.id=q.key
+input.value=data.constraints?.[q.key] || ""
+
+input.onchange=saveData
+
+div.append(label,input)
+container.appendChild(div)
+
+})
+
+}
 function resetData(){
 localStorage.clear()
 location.reload()
@@ -419,6 +463,7 @@ location.reload()
 document.addEventListener("DOMContentLoaded",()=>{
 renderTabs(defaultRooms[0])
 openRoom(defaultRooms[0])
+renderSociety()
 })
 
 </script>
