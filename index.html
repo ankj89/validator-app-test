@@ -90,12 +90,16 @@ button{padding:8px 12px;border:none;background:#1e3d8f;color:white;border-radius
 
 <script>
 const societyQuestions = [
+{key:"propertyType", label:"Whay is the type of property?", options:["Bare Shell","Property Less than 15 yrs","Property More than 15 yrs]}
 {key:"serviceLiftUsage", label:"Service lift usage allowed?", options:["Yes,Heavy material movement allowed","Yes,Heavy material movement Not allowed","No"]},
 {key:"loadingArea", label:"Debris/material loading area present?", options:["Within 30 ft","More than 30 ft","Not present"]},
-{key:"societyDemolish", label:"What king of demolition is allowed?", options:["Mechanical","Manual","Mechanical or Manual"]},
-{key:"vehicleEntry", label:"Vehicle entry possible?", options:["Yes,samm size","Yes,medium size","Yes,large size","No"]},
-{key:"societyRestrictions", label:"Society Restrictions", type:"textarea"},
-{key:"societyWorktimings", label:"Society Work Timings", type:"textarea"},
+{key:"societyDemolish", label:"What kind of demolition is allowed?", options:["Mechanical","Manual","Mechanical or Manual"]},
+{key:"vehicleEntry", label:"Vehicle entry allowed inside the premises?", options:["Yes,small size","Yes,medium size","Yes,large size","No"]},
+{key:"waterPoint", label:"Is there and active water inlet point at site location?", options:["Yes","No"]}
+{key:"electricPoint", label:"Is there and active power point at site location?", options:["Yes","No"]}
+{key:"workNOC", label:"Any NOC required to do internal modifications to the property?", options:["Yes","No"]}
+{key:"societyRestrictions", label:"Please mention any other society restrictions", type:"textarea"},
+{key:"societyWorktimings", label:"Please mention the permissible works days and timings.Ex- Moday to Saturday, 10 AM to 2 PM,4PM to 8 PM", type:"textarea"},
 ]
 const walls=["NW","EW","SW","WW"]
 
