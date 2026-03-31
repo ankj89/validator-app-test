@@ -343,22 +343,50 @@ div.append(label,input)
 return div
 }
 
+/* 🔥 MEASUREMENT CONFIG */
+
+const measurementFields = [
+
 /* FLOOR TO CEILING */
-measureSection.appendChild(createInput("Floor to Ceiling - Corner 1","fc1"))
-measureSection.appendChild(createInput("Floor to Ceiling - Corner 2","fc2"))
-measureSection.appendChild(createInput("Floor to Ceiling - Corner 3","fc3"))
-measureSection.appendChild(createInput("Floor to Ceiling - Corner 4","fc4"))
-measureSection.appendChild(createInput("Floor to Ceiling - Center","fc5"))
+{label:"Floor to Ceiling - Corner 1", key:"fc1"},
+{label:"Floor to Ceiling - Corner 2", key:"fc2"},
+{label:"Floor to Ceiling - Corner 3", key:"fc3"},
+{label:"Floor to Ceiling - Corner 4", key:"fc4"},
+{label:"Floor to Ceiling - Center", key:"fc5"},
 
 /* ROOM DIAGONALS */
-measureSection.appendChild(createInput("Room Diagonal 1","diag1"))
-measureSection.appendChild(createInput("Room Diagonal 2","diag2"))
+{label:"Room Diagonal 1", key:"diag1"},
+{label:"Room Diagonal 2", key:"diag2"},
 
 /* WALL UNDULATION */
-measureSection.appendChild(createInput("Wall Undulation NW","undNW"))
-measureSection.appendChild(createInput("Wall Undulation EW","undEW"))
-measureSection.appendChild(createInput("Wall Undulation SW","undSW"))
-measureSection.appendChild(createInput("Wall Undulation WW","undWW"))
+{label:"Wall Undulation NW", key:"undNW"},
+{label:"Wall Undulation EW", key:"undEW"},
+{label:"Wall Undulation SW", key:"undSW"},
+{label:"Wall Undulation WW", key:"undWW"},
+
+/* 🔥 NEW ADDITIONS */
+
+/* CEILING UTILITIES */
+{label:"Beam Bottom to Floor (mm)", key:"beamFloor"},
+{label:"Sprinkler Head to Floor (mm)", key:"sprinklerFloor"},
+
+/* SOFFIT (WALL-WISE) */
+{label:"Door Soffit to Ceiling - NW", key:"soffitNW"},
+{label:"Door Soffit to Ceiling - EW", key:"soffitEW"},
+{label:"Door Soffit to Ceiling - SW", key:"soffitSW"},
+{label:"Door Soffit to Ceiling - WW", key:"soffitWW"},
+
+/* WINDOW SOFFIT */
+{label:"Window Soffit to Ceiling - NW", key:"winSoffitNW"},
+{label:"Window Soffit to Ceiling - EW", key:"winSoffitEW"},
+{label:"Window Soffit to Ceiling - SW", key:"winSoffitSW"},
+{label:"Window Soffit to Ceiling - WW", key:"winSoffitWW"}
+
+]
+
+measurementFields.forEach(f=>{
+measureSection.appendChild(createInput(f.label,f.key))
+})
 /* ✅ NEXT ROOM BUTTON (CORRECT PLACE) */
 let index = roomOrder.indexOf(room)
 
@@ -404,24 +432,17 @@ let measureRows=[]
 Object.keys(data.rooms).forEach(room=>{
 let m=data.rooms[room].measurement || {}
 
-measureRows.push({
-...data.project,
-...data.constraints,
-Room:room,
-Floor_Corner1:m.fc1 || "",
-Floor_Corner2:m.fc2 || "",
-Floor_Corner3:m.fc3 || "",
-Floor_Corner4:m.fc4 || "",
-Floor_Center:m.fc5 || "",
-Diagonal1:m.diag1 || "",
-Diagonal2:m.diag2 || "",
-Undulation_NW:m.undNW || "",
-Undulation_EW:m.undEW || "",
-Undulation_SW:m.undSW || "",
-Undulation_WW:m.undWW || ""
+let row = {
+Room: room
+}
+
+measurementFields.forEach(f=>{
+row[f.key] = m[f.key] || ""
 })
 
+measureRows.push(row)
 })
+
 
 let ws2=XLSX.utils.json_to_sheet(measureRows)
 XLSX.utils.book_append_sheet(wb,ws2,"Measurements")
