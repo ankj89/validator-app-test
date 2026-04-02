@@ -185,7 +185,14 @@ let data=JSON.parse(localStorage.getItem("validatorData")||"{}")
 function normalizeData(){
 if(!data.rooms)data.rooms={}
 defaultRooms.forEach(r=>{
-if(!data.rooms[r])data.rooms[r]={room:{},wall:{},wallSel:{},measurement:{}}
+if(!data.rooms[r])data.rooms[r]={room:{},wall:{},wallSel:{},measurement:{},photos: {
+  "NW": [],
+  "EW": [],
+  "SW": [],
+  "WW": [],
+  "Ceiling": [],
+  "Floor": []
+}}
 })
 }
 normalizeData()
@@ -414,6 +421,50 @@ nextBtn.onclick=()=>goToNextRoom(room)
 
 container.appendChild(nextBtn)
 
+/* 🔥 PHOTO SECTION (ADVANCED) */
+let photoSection=createAccordion("Site Photographs")
+
+const surfaces = ["NW","EW","SW","WW","Ceiling","Floor"]
+
+surfaces.forEach(surface=>{
+
+let block=document.createElement("div")
+block.className="questionBlock"
+
+let title=document.createElement("label")
+title.innerText=surface
+block.appendChild(title)
+
+/* ADD BUTTON */
+let btn=document.createElement("button")
+btn.innerText="Add Photo"
+btn.onclick=()=>openCamera(surface, room)
+block.appendChild(btn)
+
+/* IMAGE LIST */
+let list=document.createElement("div")
+list.style.display="flex"
+list.style.flexWrap="wrap"
+list.style.gap="8px"
+
+let photos = r.photos[surface] || []
+
+photos.forEach((p,idx)=>{
+let img=document.createElement("img")
+img.src=p
+img.style.width="80px"
+img.style.cursor="pointer"
+
+img.onclick=()=>openEditor(surface, room, idx)
+
+list.appendChild(img)
+})
+
+block.appendChild(list)
+photoSection.appendChild(block)
+
+})
+  
 }
 
 function generateExcel(){
@@ -460,7 +511,58 @@ XLSX.utils.book_append_sheet(wb,ws2,"Measurements")
 
 XLSX.writeFile(wb,"site_validation.xlsx")
 }
+  
+function openCamera(surface, room){
 
+let input=document.createElement("input")
+input.type="file"
+input.accept="image/*"
+input.capture="environment"
+
+input.onchange=(e)=>{
+let file=e.target.files[0]
+if(file) processImage(file, surface, room)
+}
+
+input.click()
+}
+
+function processImage(file, surface, room){
+
+let reader=new FileReader()
+
+reader.onload=function(e){
+
+let img=new Image()
+img.src=e.target.result
+
+img.onload=function(){
+
+let canvas=document.createElement("canvas")
+let ctx=canvas.getContext("2d")
+
+let maxWidth=800
+let scale=maxWidth/img.width
+
+canvas.width=maxWidth
+canvas.height=img.height*scale
+
+ctx.drawImage(img,0,0,canvas.width,canvas.height)
+
+let compressed=canvas.toDataURL("image/jpeg",0.6)
+
+/* STORE */
+data.rooms[room].photos[surface].push(compressed)
+
+saveData()
+openRoom(room)
+
+}
+}
+
+reader.readAsDataURL(file)
+}
+  
 function addRoom(){
 let name=prompt("Room name")
 if(!name)return
@@ -468,6 +570,81 @@ roomOrder.push(name)
 data.rooms[name]={room:{},wall:{},wallSel:{},measurement:{}}
 renderTabs(name)
 }
+function openEditor(surface, room, index){
+
+let imgSrc = data.rooms[room].photos[surface][index]
+
+let win = window.open()
+
+win.document.write(`
+<html>
+<body style="margin:0">
+<canvas id="c"></canvas>
+
+<div style="position:fixed;top:10px;left:10px;">
+<button onclick="mode='draw'">Draw</button>
+<button onclick="mode='text'">Text</button>
+<button onclick="save()">Save</button>
+</div>
+
+<script>
+let canvas=document.getElementById("c")
+let ctx=canvas.getContext("2d")
+
+let img=new Image()
+img.src="${imgSrc}"
+
+let mode="draw"
+let drawing=false
+
+img.onload=function(){
+canvas.width=img.width
+canvas.height=img.height
+ctx.drawImage(img,0,0)
+}
+
+canvas.onmousedown=()=>drawing=true
+canvas.onmouseup=()=>drawing=false
+
+canvas.onmousemove=(e)=>{
+if(mode==="draw" && drawing){
+ctx.lineWidth=3
+ctx.strokeStyle="red"
+ctx.lineTo(e.offsetX,e.offsetY)
+ctx.stroke()
+ctx.beginPath()
+ctx.moveTo(e.offsetX,e.offsetY)
+}
+}
+
+canvas.onclick=(e)=>{
+if(mode==="text"){
+let txt=prompt("Enter note")
+if(txt){
+ctx.fillStyle="red"
+ctx.font="16px Arial"
+ctx.fillText(txt,e.offsetX,e.offsetY)
+}
+}
+}
+
+function save(){
+let data=canvas.toDataURL("image/jpeg",0.7)
+window.opener.saveAnnotated("${room}","${surface}",${index},data)
+window.close()
+}
+<\/script>
+
+</body>
+</html>
+`)
+}
+function saveAnnotated(room, surface, index, dataURL){
+data.rooms[room].photos[surface][index]=dataURL
+saveData()
+openRoom(room)
+}
+  
   function goToNextRoom(currentRoom){
 
 let index = roomOrder.indexOf(currentRoom)
