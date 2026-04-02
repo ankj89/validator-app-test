@@ -410,6 +410,7 @@ measureSection.appendChild(createInput(f.label,f.key))
 })
 /* 🔥 PHOTO SECTION (ADVANCED) */
 let photoSection=createAccordion("Site Photographs")
+photoSection.setAttribute("data-section","photo")
 
 const surfaces = ["NW","EW","SW","WW","Ceiling","Floor"]
 
@@ -561,7 +562,7 @@ data.rooms[room].photos[surface].push(compressed)
 
 saveData()
 let activeRoom = room
-setTimeout(()=>openRoom(activeRoom), 0)
+refreshPhotoSection(room)
 
 }
 }
@@ -643,7 +644,9 @@ ctx.fillText(txt,e.offsetX,e.offsetY)
 /* SAVE */
 function save(){
 let data=canvas.toDataURL("image/jpeg",0.7)
-window.opener.saveAnnotated("${room}","${surface}",${index},data)
+if(window.opener && window.opener.saveAnnotated){
+  window.opener.saveAnnotated("${room}","${surface}",${index},data)
+}
 window.close()
 }
 <\/script>
