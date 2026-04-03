@@ -84,6 +84,7 @@ button{padding:8px 12px;border:none;background:#1e3d8f;color:white;border-radius
 
 <div class="card">
 <button onclick="generateExcel()">Generate Excel</button>
+<button onclick="downloadAllImages()">Download Images</button>
 </div>
 
 </div>
@@ -984,6 +985,39 @@ location.reload()
 }
 
 }
+}
+async function downloadAllImages(){
+
+for(let room in data.rooms){
+
+let r = data.rooms[room]
+
+for(let surface in r.photos){
+
+let photos = r.photos[surface] || []
+
+for(let i=0;i<photos.length;i++){
+
+let id = photos[i]
+
+let src = await getPhotoFromDB(id)
+
+if(!src) continue
+
+let a = document.createElement("a")
+a.href = src
+a.download = `${room}_${surface}_${i+1}.jpg`
+
+document.body.appendChild(a)
+a.click()
+document.body.removeChild(a)
+
+}
+}
+}
+
+alert("All images downloaded ✅")
+
 }
 
 document.addEventListener("DOMContentLoaded", async ()=>{
