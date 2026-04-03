@@ -558,18 +558,113 @@ ctx.drawImage(img,0,0,canvas.width,canvas.height)
 let compressed=canvas.toDataURL("image/jpeg",0.6)
 
 /* STORE */
-data.rooms[room].photos[surface].push(compressed)
-
-saveData()
-let activeRoom = room
-refreshPhotoSection(room)
+openEditorDirect(compressed, surface, room)
 
 }
 }
 
 reader.readAsDataURL(file)
 }
-  
+  function openEditorDirect(imgSrc, surface, room){
+
+let overlay=document.createElement("div")
+overlay.style.position="fixed"
+overlay.style.top=0
+overlay.style.left=0
+overlay.style.width="100%"
+overlay.style.height="100%"
+overlay.style.background="#000000cc"
+overlay.style.zIndex=9999
+
+overlay.innerHTML=`
+<div style="position:absolute;top:10px;left:10px;z-index:10;">
+<button id="drawBtn">Draw</button>
+<button id="textBtn">Text</button>
+<button id="saveBtn">Save</button>
+<button id="closeBtn">Close</button>
+</div>
+
+<canvas id="editorCanvas"></canvas>
+`
+
+document.body.appendChild(overlay)
+
+let canvas=overlay.querySelector("#editorCanvas")
+let ctx=canvas.getContext("2d")
+
+let img=new Image()
+img.src=imgSrc
+
+let drawing=false
+let mode="draw"
+
+img.onload=()=>{
+canvas.width=img.width
+canvas.height=img.height
+canvas.style.position="absolute"
+canvas.style.top="0"
+canvas.style.left="0"
+ctx.drawImage(img,0,0)
+}
+
+/* BUTTONS */
+overlay.querySelector("#drawBtn").onclick=()=>mode="draw"
+overlay.querySelector("#textBtn").onclick=()=>mode="text"
+
+overlay.querySelector("#closeBtn").onclick=()=>{
+document.body.removeChild(overlay)
+}
+
+/* DRAW */
+canvas.onmousedown=(e)=>{
+if(mode!=="draw") return
+drawing=true
+ctx.beginPath()
+ctx.moveTo(e.offsetX,e.offsetY)
+}
+
+canvas.onmouseup=()=>drawing=false
+canvas.onmouseleave=()=>drawing=false
+
+canvas.onmousemove=(e)=>{
+if(!drawing) return
+
+ctx.lineCap="round"
+ctx.lineJoin="round"
+ctx.strokeStyle="red"
+ctx.lineWidth=3
+
+ctx.lineTo(e.offsetX,e.offsetY)
+ctx.stroke()
+
+ctx.beginPath()
+ctx.moveTo(e.offsetX,e.offsetY)
+}
+
+/* TEXT */
+canvas.onclick=(e)=>{
+if(mode==="text"){
+let txt=prompt("Enter note")
+if(txt){
+ctx.fillStyle="red"
+ctx.font="18px Arial"
+ctx.fillText(txt,e.offsetX,e.offsetY)
+}
+}
+}
+
+/* SAVE */
+overlay.querySelector("#saveBtn").onclick=()=>{
+let finalImg=canvas.toDataURL("image/jpeg",0.7)
+
+data.rooms[room].photos[surface].push(finalImg)
+
+saveData()
+refreshPhotoSection(room)
+
+document.body.removeChild(overlay)
+}
+}
 function addRoom(){
 let name=prompt("Room name")
 if(!name)return
