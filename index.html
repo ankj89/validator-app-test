@@ -316,7 +316,12 @@ if(!data.uiState) data.uiState={}
 data.uiState[title] = isOpen
 content.style.display = isOpen ? "block" : "none"
 }
+container.appendChild(acc)
+container.appendChild(content)
 
+return content
+  
+}
 
 /* WALL */
 let wallSection=createAccordion("Wall Questions")
@@ -587,7 +592,6 @@ if(document.getElementById("editorCanvas")){
 return
 }
 
-  /* 🔒 LOCK PAGE SCROLL */
 document.body.style.overflow = "hidden"
 
 let overlay = document.createElement("div")
@@ -617,6 +621,7 @@ overlay.querySelector("#saveBtn").onclick = async () => {
 
   
 let canvas = overlay.querySelector("#editorCanvas")
+canvas.style.touchAction = "none"
 let ctx = canvas.getContext("2d")
 
 try{
@@ -639,7 +644,7 @@ alert("Error saving image")
 }
 }
 /* 🔥 CRITICAL: STOP SCROLL + ZOOM */
-canvas.style.touchAction = "none"
+
 
 /* STATE */
 let mode = "draw"
@@ -734,7 +739,6 @@ ctx.fillText(txt, p.x, p.y)
 /* 🔓 RESTORE SCROLL */
 document.body.style.overflow = "auto"
 
-document.body.removeChild(overlay)
 }
 
 /* CLOSE */
