@@ -489,6 +489,24 @@ let tx = db.transaction(["photos"], "readwrite")
 let store = tx.objectStore("photos")
 store.delete(id)
 }
+async function getDBSizeEstimate(){
+let total = 0
+
+return new Promise((resolve)=>{
+let tx = db.transaction(["photos"], "readonly")
+let store = tx.objectStore("photos")
+
+store.openCursor().onsuccess = function(e){
+let cursor = e.target.result
+if(cursor){
+total += cursor.value.data.length
+cursor.continue()
+}else{
+resolve(total / (1024*1024)) // MB
+}
+}
+})
+}
   
 function generateExcel(){
 saveData()
@@ -564,8 +582,9 @@ img.onload = function(){
 let canvas = document.createElement("canvas")
 let ctx = canvas.getContext("2d")
 
-let maxWidth = img.width   // 🔥 keep original size
-let scale = 1
+let maxWidth = 1200   // 🔥 LIMIT SIZE
+let scale = maxWidth / img.width
+
 
 canvas.width = maxWidth
 canvas.height = img.height * scale
@@ -622,15 +641,26 @@ canvas.style.touchAction = "none"
   /* CLOSE */
 overlay.querySelector("#closeBtn").onclick = () => {
 document.body.style.overflow = "auto"
+canvas.replaceWith(canvas.cloneNode(true))
 document.body.removeChild(overlay)
 }
   
 /* SAVE */
+let sizeMB = await getDBSizeEstimate()
+
+if(sizeMB > 80){
+alert("Storage almost full. Please delete some images.")
+return
+} 
 overlay.querySelector("#saveBtn").onclick = async () => {
+
+let btn = overlay.querySelector("#saveBtn")
+btn.innerText = "Saving..."
+btn.disabled = true
 
 try{
 
-let finalImg = canvas.toDataURL("image/jpeg", 0.7)
+let finalImg = canvas.toDataURL("image/png")
 
 let id = "img_" + Date.now()
 
@@ -641,13 +671,16 @@ data.rooms[room].photos[surface].push(id)
 saveData()
 refreshPhotoSection(room)
 
+document.body.style.overflow = "auto"
+canvas.replaceWith(canvas.cloneNode(true))
+document.body.removeChild(overlay)
 
 }catch(err){
 console.error(err)
 alert("Error saving image")
+btn.innerText = "Save"
+btn.disabled = false
 }
-document.body.style.overflow = "auto"
-document.body.removeChild(overlay) 
 }
 /* 🔥 CRITICAL: STOP SCROLL + ZOOM */
 
@@ -885,8 +918,16 @@ wrapper.style.display = "inline-block"
 /* IMAGE */
 let img=document.createElement("img")
 getPhotoFromDB(photo).then(src=>{
+if(src){
 img.src = src
+}else{
+img.src = "https://via.placeholder.com/80?text=No+Image"
+}
 })
+
+img.onerror = ()=>{
+img.src = "https://via.placeholder.com/80?text=Error"
+}
 img.style.width="80px"
 img.style.cursor="pointer"
 
