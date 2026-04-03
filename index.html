@@ -728,7 +728,7 @@ if(!drawing || mode !== "draw") return
 ctx.lineCap = "round"
 ctx.lineJoin = "round"
 ctx.strokeStyle = "red"
-ctx.lineWidth = 3
+ctx.lineWidth = 15
 
 let p = getCoords(e)
 
@@ -754,7 +754,7 @@ if(mode === "text"){
 let txt = prompt("Enter note")
 if(txt){
 ctx.fillStyle = "red"
-ctx.font = "48px Arial"
+ctx.font = "68px Arial"
 let p = getCoords(e)
 ctx.fillText(txt, p.x, p.y)
 }
