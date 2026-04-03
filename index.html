@@ -178,7 +178,7 @@ const wallQuestions=["Is the wall a load-bearing wall/Mivan Construction/Sheer w
 "Do we need to remove skirting for wardrobe installlation?"]
 
 const defaultRooms=["Living Room","Kitchen","Bedroom 1","Bedroom 2","Bathroom 1","Bathroom 2","Balcony"]
-
+let approxSizeMB = parseFloat(localStorage.getItem("dbSizeMB") || "0")
 let db
 
 function initDB(){
@@ -489,24 +489,7 @@ let tx = db.transaction(["photos"], "readwrite")
 let store = tx.objectStore("photos")
 store.delete(id)
 }
-async function getDBSizeEstimate(){
-let total = 0
 
-return new Promise((resolve)=>{
-let tx = db.transaction(["photos"], "readonly")
-let store = tx.objectStore("photos")
-
-store.openCursor().onsuccess = function(e){
-let cursor = e.target.result
-if(cursor){
-total += cursor.value.data.length
-cursor.continue()
-}else{
-resolve(total / (1024*1024)) // MB
-}
-}
-})
-}
   
 function generateExcel(){
 saveData()
@@ -606,7 +589,7 @@ openEditorDirect(compressed, surface, room)
 reader.readAsDataURL(file)
 }
   
-async function openEditorDirect(imgSrc, surface, room){
+async function openEditorDirect(imgSrc, surface, room, index = null){
 if(document.getElementById("editorCanvas")){
 return
 }
@@ -646,27 +629,32 @@ document.body.removeChild(overlay)
 }
   
 /* SAVE */
-let sizeMB = await getDBSizeEstimate()
+
+overlay.querySelector("#saveBtn").onclick = async () => {
 
 if(sizeMB > 80){
 alert("Storage almost full. Please delete some images.")
 return
 } 
-overlay.querySelector("#saveBtn").onclick = async () => {
-
 let btn = overlay.querySelector("#saveBtn")
 btn.innerText = "Saving..."
 btn.disabled = true
 
 try{
 
-let finalImg = canvas.toDataURL("image/png")
+let finalImg = canvas.toDataURL("image/jpeg")
 
 let id = "img_" + Date.now()
 
 await savePhotoToDB(id, finalImg)
+approxSizeMB += finalImg.length / (1024*1024)
+localStorage.setItem("dbSizeMB", approxSizeMB)
 
+if(index !== null){
+data.rooms[room].photos[surface][index] = id
+}else{
 data.rooms[room].photos[surface].push(id)
+}
 
 saveData()
 refreshPhotoSection(room)
@@ -935,7 +923,7 @@ img.onclick = async ()=>{
 
 let src = await getPhotoFromDB(photo)
 
-openEditorDirect(src, surface, room)
+openEditorDirect(src, surface, room, idx)
 }
 
 /* DELETE BUTTON */
@@ -985,8 +973,17 @@ photoSection.style.display = "block"
 }
 }
 function resetData(){
+
+if(confirm("This will delete all data including photos. Continue?")){
+
+let req = indexedDB.deleteDatabase("SiteValidatorDB")
+
+req.onsuccess = ()=>{
 localStorage.clear()
 location.reload()
+}
+
+}
 }
 
 document.addEventListener("DOMContentLoaded", async ()=>{
