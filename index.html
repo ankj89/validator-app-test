@@ -782,15 +782,15 @@ function refreshPhotoSection(room){
 
 let r = data.rooms[room]
 
-// 🔥 STEP 1: Get photo section
+/* GET PHOTO SECTION */
 let photoSection = document.querySelector("[data-section='photo']")
-
-// ❗ Important: capture state BEFORE clearing
-let wasOpen = photoSection && photoSection.style.display === "block"
 
 if(!photoSection) return
 
-// 🔥 STEP 2: clear content
+/* PRESERVE OPEN STATE */
+let wasOpen = photoSection.style.display !== "none"
+
+/* CLEAR */
 photoSection.innerHTML = ""
 
 const surfaces = ["NW","EW","SW","WW","Ceiling","Floor"]
@@ -800,15 +800,18 @@ surfaces.forEach(surface=>{
 let block=document.createElement("div")
 block.className="questionBlock"
 
+/* TITLE */
 let title=document.createElement("label")
 title.innerText=surface
 block.appendChild(title)
 
+/* ADD BUTTON */
 let btn=document.createElement("button")
 btn.innerText="Add Photo"
 btn.onclick=()=>openCamera(surface, room)
 block.appendChild(btn)
 
+/* IMAGE LIST */
 let list=document.createElement("div")
 list.style.display="flex"
 list.style.flexWrap="wrap"
@@ -816,8 +819,7 @@ list.style.gap="8px"
 
 let photos = r.photos[surface] || []
 
-photos.forEach((p,idx)=>{
-photos.forEach((p,idx)=>{
+photos.forEach((photo, idx)=>{
 
 /* WRAPPER */
 let wrapper = document.createElement("div")
@@ -826,11 +828,11 @@ wrapper.style.display = "inline-block"
 
 /* IMAGE */
 let img=document.createElement("img")
-img.src=p
+img.src = photo
 img.style.width="80px"
 img.style.cursor="pointer"
 
-img.onclick=()=>openEditorDirect(p, surface, room)
+img.onclick=()=>openEditorDirect(photo, surface, room)
 
 /* DELETE BUTTON */
 let del=document.createElement("div")
@@ -863,14 +865,12 @@ list.appendChild(wrapper)
 
 block.appendChild(list)
 photoSection.appendChild(block)
-
 })
 
-// 🔥 STEP 3: restore open state
+/* RESTORE STATE */
 if(wasOpen){
 photoSection.style.display = "block"
 }
-
 }
 function resetData(){
 localStorage.clear()
