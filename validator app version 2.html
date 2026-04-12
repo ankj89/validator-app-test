@@ -359,7 +359,7 @@ function endValidation(){
         return
     }
 
-    // 🔥 DELETE DB (DON'T WAIT)
+    // 🔥 DELETE DB
     indexedDB.deleteDatabase("SiteValidatorDB")
 
     // 🔥 CLEAR STORAGE
@@ -386,10 +386,8 @@ function endValidation(){
         }
     })
 
-    // 🔥 RESET UI
-    document.getElementById("validationApp").style.display = "none"
-    document.getElementById("startValidationBtn").style.display = "block"
-    document.getElementById("endValidationBtn").style.display = "none"
+    // 🔥 FORCE UI RESET (THIS WAS MISSING)
+    renderAppSections()   // ⭐⭐⭐ CRITICAL LINE
 
     document.getElementById("roomForm").innerHTML = ""
     document.getElementById("roomTabs").innerHTML = ""
@@ -398,7 +396,11 @@ function endValidation(){
     alert("Reset successful ✅")
 }
 function renderAppSections(){
-
+if(!data.validationMeta || !data.validationMeta.started){
+        document.getElementById("validationApp").style.display = "none"
+        document.getElementById("startValidationBtn").style.display = "block"
+        return
+    }
     let app = document.getElementById("validationApp")
     let startBtn = document.getElementById("startValidationBtn")
     let endBtn = document.getElementById("endValidationBtn")
@@ -1155,6 +1157,22 @@ container.appendChild(div)
 })
 
 }
+function openCamera(surface, room){
+
+    let input = document.createElement("input")
+    input.type = "file"
+    input.accept = "image/*"
+    input.capture = "environment"   // mobile camera
+
+    input.onchange = function(e){
+        let file = e.target.files[0]
+        if(file){
+            processImage(file, surface, room)
+        }
+    }
+
+    input.click()
+}  
 function refreshPhotoSection(room){
 
 let r = data.rooms[room]
