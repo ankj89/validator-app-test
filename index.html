@@ -235,7 +235,7 @@ const wallQuestions=["Is the wall a load-bearing wall/mivan construction/sheer w
 const defaultRooms=["Living Room","Kitchen","Bedroom 1","Bedroom 2","Bathroom 1","Bathroom 2","Balcony"]
 let approxSizeMB = parseFloat(localStorage.getItem("dbSizeMB") || "0")
 let db
-let isEndingValidation = false
+
 function initDB(){
 return new Promise((resolve, reject)=>{
 let request = indexedDB.open("SiteValidatorDB", 1)
@@ -359,20 +359,45 @@ function endValidation(){
         return
     }
 
-    isEndingValidation = true
-
+    // 🔥 DELETE DB
     let req = indexedDB.deleteDatabase("SiteValidatorDB")
 
     req.onsuccess = ()=>{
 
-        // ✅ VERY IMPORTANT: remove ONLY app keys
+        // 🔥 CLEAR STORAGE
         localStorage.removeItem("validatorData")
         localStorage.removeItem("dbSizeMB")
 
-        // ✅ FORCE CLEAN STATE BEFORE RELOAD
-        data = null
+        // 🔥 HARD RESET DATA
+        data = {
+            validationMeta: {
+                started: false,
+                ended: false,
+                excelGenerated: false,
+                imagesDownloaded: false
+            },
+            rooms: {}
+        }
 
-        location.reload()
+        // 🔥 CLEAR INPUTS
+        ["pid","cx","city","address","society","flat","floorNo"].forEach(id=>{
+            let el = document.getElementById(id)
+            if(el){
+                el.value = ""
+                el.disabled = false
+            }
+        })
+
+        // 🔥 RESET UI
+        document.getElementById("validationApp").style.display = "none"
+        document.getElementById("startValidationBtn").style.display = "block"
+        document.getElementById("endValidationBtn").style.display = "none"
+
+        document.getElementById("roomForm").innerHTML = ""
+        document.getElementById("roomTabs").innerHTML = ""
+        document.getElementById("societyForm").innerHTML = ""
+
+        alert("Reset successful ✅")
     }
 }
 function renderAppSections(){
@@ -1263,7 +1288,7 @@ if(confirm("This will delete all data including photos. Continue?")){
 
         // ✅ FULL RESET
         data = {}
-        location.reload()
+      
     }
 }
 }
@@ -1304,11 +1329,7 @@ renderAppSections()
 }
 
 window.onbeforeunload = function () {
-
-    // ✅ ALLOW reload during END
-    if(isEndingValidation) return
-
-    if(data.validationMeta?.started && !data.validationMeta?.ended){
+    if(data.validationMeta?.started){
         return "Validation in progress. Are you sure?"
     }
 }
