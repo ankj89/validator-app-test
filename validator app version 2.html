@@ -258,11 +258,20 @@ request.onerror = reject
 }  
   
 let roomOrder=[...defaultRooms]
-let data=JSON.parse(localStorage.getItem("validatorData")||"{}")
-if (!data.validationMeta) data.validationMeta = {}
+let data = JSON.parse(localStorage.getItem("validatorData") || "null")
 
-if (data.validationMeta.started === undefined) data.validationMeta.started = false
-if (data.validationMeta.ended === undefined) data.validationMeta.ended = false
+// ✅ If no data → true fresh start
+if(!data){
+    data = {
+        validationMeta: {
+            started: false,
+            ended: false,
+            excelGenerated: false,
+            imagesDownloaded: false
+        },
+        rooms: {}
+    }
+}
   
 
 function normalizeData(){
@@ -279,9 +288,27 @@ if(!data.rooms[r])data.rooms[r]={room:{},wall:{},wallSel:{},measurement:{},photo
 })
 }
 normalizeData()
+function ensureValidationMeta(){
+    if(!data.validationMeta){
+        data.validationMeta = {
+            started: false,
+            ended: false,
+            excelGenerated: false,
+            imagesDownloaded: false
+        }
+    }
+}  
 
 function saveData(){
-data.project={pid:pid.value,cx:cx.value,city:city.value,address:address.value,society:society.value,flat:flat.value,floorNo:floorNo.value}
+data.project = {
+    pid: document.getElementById("pid").value,
+    cx: document.getElementById("cx").value,
+    city: document.getElementById("city").value,
+    address: document.getElementById("address").value,
+    society: document.getElementById("society").value,
+    flat: document.getElementById("flat").value,
+    floorNo: document.getElementById("floorNo").value
+}
 data.constraints={}
 
 societyQuestions.forEach(q=>{
@@ -291,53 +318,84 @@ if(el) data.constraints[q.key]=el.value
 localStorage.setItem("validatorData",JSON.stringify(data))
 }
 function startValidation(){
+   
+    ensureValidationMeta()  // ✅ ADD THIS
+let pidVal = document.getElementById("pid").value
+let cxVal = document.getElementById("cx").value
+let cityVal = document.getElementById("city").value
 
-    if(!pid.value || !cx.value || !city.value){
-        alert("Please fill PID, Cx Name, City")
+if(!pidVal || !cxVal || !cityVal){
+    alert("Please fill PID, Cx Name, City")
+    return
+}
+
+    if(!confirm("Start validation?")){
         return
     }
 
-    if(!confirm("Start validation? Project details will be locked.")){
-        return
+    data.validationMeta = {
+        started: true,
+        ended: false,
+        excelGenerated: false,
+        imagesDownloaded: false,
+        startTime: new Date().toLocaleString()
     }
-
-    data.validationMeta.started = true
-    data.validationMeta.ended = false
-    data.validationMeta.startTime = new Date().toLocaleString()
 
     saveData()
 
     renderAppSections()
-
-    // ✅ CRITICAL FIX (THIS WAS MISSING)
     renderSociety()
-
     renderTabs(defaultRooms[0])
     openRoom(defaultRooms[0])
 }
 function endValidation(){
 
-    if(!data.validationMeta.started){
-        alert("Validation not started")
+    if(!data.validationMeta.excelGenerated || !data.validationMeta.imagesDownloaded){
+        alert("Please generate Excel and download images before ending validation")
         return
     }
 
-    if(data.validationMeta.ended){
-        alert("Already completed")
+    if(!confirm("End validation and reset app?")){
         return
     }
 
-    if(!confirm("End validation? This will lock all data.")){
-        return
+    // 🔥 DELETE DB (DON'T WAIT)
+    indexedDB.deleteDatabase("SiteValidatorDB")
+
+    // 🔥 CLEAR STORAGE
+    localStorage.removeItem("validatorData")
+    localStorage.removeItem("dbSizeMB")
+
+    // 🔥 RESET DATA
+    data = {
+        validationMeta: {
+            started: false,
+            ended: false,
+            excelGenerated: false,
+            imagesDownloaded: false
+        },
+        rooms: {}
     }
 
-    data.validationMeta.ended = true
-    data.validationMeta.endTime = new Date().toLocaleString()
+    // 🔥 CLEAR INPUTS
+    ["pid","cx","city","address","society","flat","floorNo"].forEach(id=>{
+        let el = document.getElementById(id)
+        if(el){
+            el.value = ""
+            el.disabled = false
+        }
+    })
 
-    saveData()
-    renderAppSections()
+    // 🔥 RESET UI
+    document.getElementById("validationApp").style.display = "none"
+    document.getElementById("startValidationBtn").style.display = "block"
+    document.getElementById("endValidationBtn").style.display = "none"
 
-    alert("Validation completed ✅")
+    document.getElementById("roomForm").innerHTML = ""
+    document.getElementById("roomTabs").innerHTML = ""
+    document.getElementById("societyForm").innerHTML = ""
+
+    alert("Reset successful ✅")
 }
 function renderAppSections(){
 
@@ -350,13 +408,15 @@ function renderAppSections(){
         app.style.display = "block"
         startBtn.style.display = "none"
 
-        if(data.validationMeta.ended){
-            endBtn.style.display = "none"
-        } else {
+        // ✅ SHOW END ONLY AFTER BOTH DONE
+        if(data.validationMeta.excelGenerated && data.validationMeta.imagesDownloaded){
             endBtn.style.display = "inline-block"
+        } else {
+            endBtn.style.display = "none"
         }
+
         renderSociety()
-        // ✅ ALWAYS ensure tabs visible
+
         if(roomOrder.length > 0){
             renderTabs(roomOrder[0])
         }
@@ -368,7 +428,6 @@ function renderAppSections(){
         endBtn.style.display = "none"
     }
 
-    // 🔒 Lock project fields
     ["pid","cx","city","address","society","flat","floorNo"].forEach(id=>{
         let el = document.getElementById(id)
         if(el) el.disabled = data.validationMeta.started
@@ -648,7 +707,7 @@ function generateExcel(){
 
 if (!data.validationMeta) data.validationMeta = {}
 
-data.validationMeta.endTime = data.validationMeta.endTime || new Date().toLocaleString()
+data.validationMeta.endTime = new Date().toLocaleString()
 
 normalizeData()
 
@@ -749,6 +808,10 @@ let ws3 = XLSX.utils.json_to_sheet(constraintRows)
 XLSX.utils.book_append_sheet(wb, ws3, "Society Constraints")
 
 XLSX.writeFile(wb, "site_validation.xlsx")
+
+data.validationMeta.excelGenerated = true
+saveData()
+renderAppSections()
 }
 
 function processImage(file, surface, room){
@@ -1222,7 +1285,7 @@ if(confirm("This will delete all data including photos. Continue?")){
 
         // ✅ FULL RESET
         data = {}
-        location.reload()
+      
     }
 }
 }
@@ -1257,23 +1320,74 @@ document.body.removeChild(a)
 }
 
 alert("All images downloaded ✅")
+data.validationMeta.imagesDownloaded = true
+saveData()
+renderAppSections()
+}
 
+window.onbeforeunload = function () {
+    if(data.validationMeta?.started){
+        return "Validation in progress. Are you sure?"
+    }
 }
 
 document.addEventListener("DOMContentLoaded", async ()=>{
 
 await initDB()
 
-renderSociety()
-normalizeData()
-renderAppSections()
+let stored = localStorage.getItem("validatorData")
 
-if(data.validationMeta?.started){
-    renderTabs(defaultRooms[0])
-    openRoom(defaultRooms[0])
+// ✅ HANDLE CORRUPT / EMPTY CASE
+if(!stored || stored === "null" || stored === "undefined"){
+
+    data = {
+        validationMeta: {
+            started: false,
+            ended: false,
+            excelGenerated: false,
+            imagesDownloaded: false
+        },
+        rooms: {}
+    }
+    ensureValidationMeta()
+    normalizeData()
+
+    document.getElementById("validationApp").style.display = "none"
+    document.getElementById("startValidationBtn").style.display = "block"
+// 🔥 CLEAR UI PROPERLY
+document.getElementById("roomForm").innerHTML = ""
+document.getElementById("roomTabs").innerHTML = ""
+document.getElementById("societyForm").innerHTML = ""
+    return
 }
 
-})
+// ✅ EXISTING SESSION
+data = JSON.parse(stored)
+ensureValidationMeta()
+
+normalizeData()
+
+if(data.validationMeta?.started){
+
+    renderAppSections()
+    renderSociety()
+    renderTabs(roomOrder[0])
+    openRoom(roomOrder[0])
+
+} else {
+
+    // 🔥 FORCE CLEAN UI STATE
+    document.getElementById("validationApp").style.display = "none"
+    document.getElementById("startValidationBtn").style.display = "block"
+
+    // 🔥 CLEAR ANY RENDERED CONTENT
+    document.getElementById("roomForm").innerHTML = ""
+    document.getElementById("roomTabs").innerHTML = ""
+    document.getElementById("societyForm").innerHTML = ""
+
+}
+
+  
 window.addEventListener("message", function(event){
 if(event.data.type==="ANNOTATION_SAVE"){
 saveAnnotated(
@@ -1283,6 +1397,7 @@ event.data.index,
 event.data.data
 )
 }
+})
 })
 </script>
 
