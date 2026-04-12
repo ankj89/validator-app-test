@@ -359,46 +359,17 @@ function endValidation(){
         return
     }
 
+    // 🔥 Disable unload blocker (IMPORTANT)
+    window.onbeforeunload = null
+
     let req = indexedDB.deleteDatabase("SiteValidatorDB")
 
     req.onsuccess = ()=>{
 
-        // 🔥 CLEAR STORAGE
         localStorage.clear()
 
-        // 🔥 RESET DATA OBJECT (CRITICAL)
-        data = {
-            validationMeta: {
-                started: false,
-                ended: false,
-                excelGenerated: false,
-                imagesDownloaded: false
-            },
-            rooms: {}
-        }
-
-        // 🔥 RESET INPUT FIELDS
-        ["pid","cx","city","address","society","flat","floorNo"].forEach(id=>{
-            let el = document.getElementById(id)
-            if(el){
-                el.value = ""
-                el.disabled = false
-            }
-        })
-
-        // 🔥 RESET UI
-        document.getElementById("validationApp").style.display = "none"
-        document.getElementById("startValidationBtn").style.display = "block"
-        document.getElementById("endValidationBtn").style.display = "none"
-
-        document.getElementById("roomForm").innerHTML = ""
-        document.getElementById("roomTabs").innerHTML = ""
-        document.getElementById("societyForm").innerHTML = ""
-
-        // 🔥 DO NOT RELOAD (IMPORTANT)
-        // window.location.reload() ❌ REMOVE THIS
-
-        alert("Validation completed and reset successfully ✅")
+        // ✅ SIMPLE + RELIABLE RESET
+        location.reload()
     }
 }
 function renderAppSections(){
@@ -1329,12 +1300,11 @@ saveData()
 renderAppSections()
 }
 
-window.addEventListener("beforeunload", function (e) {
+window.onbeforeunload = function (e) {
     if(data.validationMeta?.started && !data.validationMeta?.ended){
-        e.preventDefault()
-        e.returnValue = "Validation in progress. Are you sure?"
+        return "Validation in progress. Are you sure?"
     }
-})
+}
 
 document.addEventListener("DOMContentLoaded", async ()=>{
 
