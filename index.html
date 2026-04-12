@@ -302,10 +302,15 @@ function startValidation(){
     }
 
     data.validationMeta.started = true
+    data.validationMeta.ended = false
     data.validationMeta.startTime = new Date().toLocaleString()
 
     saveData()
+
+    // ✅ CRITICAL FIX
     renderAppSections()
+    renderTabs(defaultRooms[0])
+    openRoom(defaultRooms[0])
 }
 function endValidation(){
 
@@ -348,6 +353,11 @@ function renderAppSections(){
             endBtn.style.display = "inline-block"
         }
 
+        // ✅ ALWAYS ensure tabs visible
+        if(roomOrder.length > 0){
+            renderTabs(roomOrder[0])
+        }
+
     } else {
 
         app.style.display = "none"
@@ -355,7 +365,7 @@ function renderAppSections(){
         endBtn.style.display = "none"
     }
 
-    // 🔒 Lock project fields after start
+    // 🔒 Lock project fields
     ["pid","cx","city","address","society","flat","floorNo"].forEach(id=>{
         let el = document.getElementById(id)
         if(el) el.disabled = data.validationMeta.started
@@ -430,6 +440,12 @@ if(data.validationMeta?.ended){
     alert("Validation completed. Editing disabled.")
     return
 }
+ if(!data.rooms[room]){
+    data.rooms[room] = {
+        room:{},wall:{},wallSel:{},measurement:{},
+        photos:{NW:[],EW:[],SW:[],WW:[],Ceiling:[],Floor:[]}
+    }
+} 
 const r=data.rooms[room]
 renderTabs(room)
 
@@ -945,27 +961,34 @@ ctx.fillText(txt, p.x, p.y)
 
 
 function addRoom(){
-let name=prompt("Room name")
-if(!name)return
+
+let name = prompt("Room name")
+if(!name) return
+
+if(!data.rooms[name]){
+    data.rooms[name]={
+        room:{},
+        wall:{},
+        wallSel:{},
+        measurement:{},
+        photos:{
+            "NW":[],
+            "EW":[],
+            "SW":[],
+            "WW":[],
+            "Ceiling":[],
+            "Floor":[]
+        }
+    }
+}
 
 roomOrder.push(name)
 
-data.rooms[name]={
-room:{},
-wall:{},
-wallSel:{},
-measurement:{},
-photos:{
-"NW":[],
-"EW":[],
-"SW":[],
-"WW":[],
-"Ceiling":[],
-"Floor":[]
-}
-}
-
+// ✅ FIX: re-render + open new room
 renderTabs(name)
+openRoom(name)
+
+saveData()
 }
 
 function saveAnnotated(room, surface, index, dataURL){
@@ -1187,13 +1210,17 @@ function resetData(){
 
 if(confirm("This will delete all data including photos. Continue?")){
 
-let req = indexedDB.deleteDatabase("SiteValidatorDB")
+    let req = indexedDB.deleteDatabase("SiteValidatorDB")
 
-req.onsuccess = ()=>{
-localStorage.clear()
-location.reload()
-}
+    req.onsuccess = ()=>{
 
+        localStorage.removeItem("validatorData")
+        localStorage.removeItem("dbSizeMB")
+
+        // ✅ FULL RESET
+        data = {}
+        location.reload()
+    }
 }
 }
 async function downloadAllImages(){
@@ -1235,6 +1262,7 @@ document.addEventListener("DOMContentLoaded", async ()=>{
 await initDB()
 
 renderSociety()
+normalizeData()
 renderAppSections()
 
 if(data.validationMeta?.started){
