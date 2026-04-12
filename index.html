@@ -1157,6 +1157,22 @@ container.appendChild(div)
 })
 
 }
+function openCamera(surface, room){
+
+    let input = document.createElement("input")
+    input.type = "file"
+    input.accept = "image/*"
+    input.capture = "environment"   // mobile camera
+
+    input.onchange = function(e){
+        let file = e.target.files[0]
+        if(file){
+            processImage(file, surface, room)
+        }
+    }
+
+    input.click()
+}  
 function refreshPhotoSection(room){
 
 let r = data.rooms[room]
