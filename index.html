@@ -337,21 +337,26 @@ function endValidation(){
         return
     }
 
-    // ✅ CAPTURE END TIME
-    data.validationMeta.endTime = new Date().toLocaleString()
-
-    // (Optional: you can log this before clearing if needed)
 
     let req = indexedDB.deleteDatabase("SiteValidatorDB")
 
+   
     req.onsuccess = ()=>{
 
-        // 🔥 HARD RESET
-        localStorage.clear()
+    localStorage.clear()
 
-        // ✅ FORCE COMPLETE RELOAD (important difference)
-        window.location.reload(true)
-    }
+    // 🔥 FORCE UI RESET BEFORE RELOAD
+    document.getElementById("validationApp").style.display = "none"
+    document.getElementById("startValidationBtn").style.display = "block"
+
+    document.getElementById("roomForm").innerHTML = ""
+    document.getElementById("roomTabs").innerHTML = ""
+    document.getElementById("societyForm").innerHTML = ""
+
+    window.location.reload()
+
+}
+    
 }
 function renderAppSections(){
 
@@ -663,7 +668,7 @@ function generateExcel(){
 
 if (!data.validationMeta) data.validationMeta = {}
 
-data.validationMeta.endTime = data.validationMeta.endTime || new Date().toLocaleString()
+data.validationMeta.endTime = new Date().toLocaleString()
 
 normalizeData()
 
@@ -1329,11 +1334,16 @@ if(data.validationMeta?.started){
 
 } else {
 
+    // 🔥 FORCE CLEAN UI STATE
     document.getElementById("validationApp").style.display = "none"
     document.getElementById("startValidationBtn").style.display = "block"
-}
 
-})
+    // 🔥 CLEAR ANY RENDERED CONTENT
+    document.getElementById("roomForm").innerHTML = ""
+    document.getElementById("roomTabs").innerHTML = ""
+    document.getElementById("societyForm").innerHTML = ""
+
+}
 
   
 window.addEventListener("message", function(event){
