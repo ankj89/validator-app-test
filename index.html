@@ -359,16 +359,19 @@ function endValidation(){
         return
     }
 
-    // ✅ FLAG TO BYPASS BLOCKER
     isEndingValidation = true
 
     let req = indexedDB.deleteDatabase("SiteValidatorDB")
 
     req.onsuccess = ()=>{
 
-        localStorage.clear()
+        // ✅ VERY IMPORTANT: remove ONLY app keys
+        localStorage.removeItem("validatorData")
+        localStorage.removeItem("dbSizeMB")
 
-        // ✅ CLEAN HARD RESET
+        // ✅ FORCE CLEAN STATE BEFORE RELOAD
+        data = null
+
         location.reload()
     }
 }
@@ -1316,8 +1319,8 @@ await initDB()
 
 let stored = localStorage.getItem("validatorData")
 
-// ✅ TRUE CLEAN START
-if(!stored){
+// ✅ HANDLE CORRUPT / EMPTY CASE
+if(!stored || stored === "null" || stored === "undefined"){
 
     data = {
         validationMeta: {
@@ -1333,7 +1336,10 @@ if(!stored){
 
     document.getElementById("validationApp").style.display = "none"
     document.getElementById("startValidationBtn").style.display = "block"
-
+// 🔥 CLEAR UI PROPERLY
+document.getElementById("roomForm").innerHTML = ""
+document.getElementById("roomTabs").innerHTML = ""
+document.getElementById("societyForm").innerHTML = ""
     return
 }
 
