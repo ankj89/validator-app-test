@@ -300,7 +300,15 @@ function ensureValidationMeta(){
 }  
 
 function saveData(){
-data.project={pid:pid.value,cx:cx.value,city:city.value,address:address.value,society:society.value,flat:flat.value,floorNo:floorNo.value}
+data.project = {
+    pid: document.getElementById("pid").value,
+    cx: document.getElementById("cx").value,
+    city: document.getElementById("city").value,
+    address: document.getElementById("address").value,
+    society: document.getElementById("society").value,
+    flat: document.getElementById("flat").value,
+    floorNo: document.getElementById("floorNo").value
+}
 data.constraints={}
 
 societyQuestions.forEach(q=>{
@@ -312,10 +320,14 @@ localStorage.setItem("validatorData",JSON.stringify(data))
 function startValidation(){
    
     ensureValidationMeta()  // ✅ ADD THIS
-    if(!pid.value || !cx.value || !city.value){
-        alert("Please fill PID, Cx Name, City")
-        return
-    }
+let pidVal = document.getElementById("pid").value
+let cxVal = document.getElementById("cx").value
+let cityVal = document.getElementById("city").value
+
+if(!pidVal || !cxVal || !cityVal){
+    alert("Please fill PID, Cx Name, City")
+    return
+}
 
     if(!confirm("Start validation?")){
         return
