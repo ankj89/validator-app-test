@@ -684,40 +684,37 @@ input.click()
 
 function processImage(file, surface, room){
 
-let reader = new FileReader()
-
-reader.onload = function(e){
-
 let img = new Image()
-img.src = e.target.result
+
+// 🔥 USE OBJECT URL INSTEAD OF BASE64
+let url = URL.createObjectURL(file)
+
+img.src = url
 
 img.onload = function(){
 
 let canvas = document.createElement("canvas")
 let ctx = canvas.getContext("2d")
 
-let maxWidth = 1200   // 🔥 LIMIT SIZE
+// 🔥 REDUCE SIZE (VERY IMPORTANT FOR MOBILE)
+let maxWidth = 800
 let scale = maxWidth / img.width
-
 
 canvas.width = maxWidth
 canvas.height = img.height * scale
 
 ctx.drawImage(img,0,0,canvas.width,canvas.height)
 
-let quality = 0.6
-if(file.size > 2 * 1024 * 1024) quality = 0.4
-if(file.size > 5 * 1024 * 1024) quality = 0.3
+// 🔥 COMPRESS IMAGE
+let compressed = canvas.toDataURL("image/jpeg", 0.4)
 
-let compressed = canvas.toDataURL("image/jpeg", quality)
+// 🔥 CLEAN MEMORY
+URL.revokeObjectURL(url)
 
-/* 🔥 DIRECTLY OPEN EDITOR — DO NOT SAVE FIRST */
+// 🔥 OPEN EDITOR
 openEditorDirect(compressed, surface, room)
 
 }
-}
-
-reader.readAsDataURL(file)
 }
   
 async function openEditorDirect(imgSrc, surface, room, index = null){
@@ -773,7 +770,7 @@ btn.disabled = true
 
 try{
 
-let finalImg = canvas.toDataURL("image/jpeg")
+let finalImg = canvas.toDataURL("image/jpeg", 0.7)
 
 let id = "img_" + Date.now()
 
@@ -828,8 +825,8 @@ document.body.removeChild(overlay)
 }
 
 img.onload = ()=>{
-canvas.width = img.width
-canvas.height = img.height
+canvas.width = img.width*0.9
+canvas.height = img.height*0.9
 
 canvas.style.width = "100%"
 canvas.style.height = "auto"
