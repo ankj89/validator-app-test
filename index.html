@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
+  
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Livspace-Site Validation Tool</title>
 
 <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 body{font-family:Arial;margin:0;background:#f4f6fb}
 header{background:#1e3d8f;color:white;padding:14px;font-size:18px}
@@ -1294,38 +1295,50 @@ if(confirm("This will delete all data including photos. Continue?")){
 }
 async function downloadAllImages(){
 
-for(let room in data.rooms){
+    let zip = new JSZip()
 
-let r = data.rooms[room]
+    for(let room in data.rooms){
 
-for(let surface in r.photos){
+        let roomFolder = zip.folder(room)
 
-let photos = r.photos[surface] || []
+        let r = data.rooms[room]
 
-for(let i=0;i<photos.length;i++){
+        for(let surface in r.photos){
 
-let id = photos[i]
+            let photos = r.photos[surface] || []
 
-let src = await getPhotoFromDB(id)
+            for(let i=0;i<photos.length;i++){
 
-if(!src) continue
+                let id = photos[i]
 
-let a = document.createElement("a")
-a.href = src
-a.download = `${room}_${surface}_${i+1}.jpg`
+                let src = await getPhotoFromDB(id)
+                if(!src) continue
 
-document.body.appendChild(a)
-a.click()
-document.body.removeChild(a)
+                // Convert base64 → blob
+                let blob = await fetch(src).then(res => res.blob())
 
-}
-}
-}
+                let fileName = `${surface}_${i+1}.jpg`
 
-alert("All images downloaded ✅")
-data.validationMeta.imagesDownloaded = true
-saveData()
-renderAppSections()
+                roomFolder.file(fileName, blob)
+            }
+        }
+    }
+
+    // 🔥 Generate ZIP
+    zip.generateAsync({type:"blob"}).then(function(content){
+
+        let a = document.createElement("a")
+        a.href = URL.createObjectURL(content)
+        a.download = "Site_Validation_Photos.zip"
+        a.click()
+
+    })
+
+    alert("Images downloaded as ZIP ✅")
+
+    data.validationMeta.imagesDownloaded = true
+    saveData()
+    renderAppSections()
 }
 
 window.onbeforeunload = function () {
