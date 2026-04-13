@@ -1297,10 +1297,35 @@ async function downloadAllImages(){
 
     let zip = new JSZip()
 
+    // 🔥 FILE NAME
+    let pid = data.project?.pid || "PID"
+    let cx = data.project?.cx || "Cx"
+
+    pid = pid.replace(/[^a-zA-Z0-9]/g, "_")
+    cx = cx.replace(/[^a-zA-Z0-9]/g, "_")
+
+    let zipName = `${pid}_${cx}_photos.zip`
+
+    // 🔥 COUNT TOTAL IMAGES
+    let total = 0
+    for(let room in data.rooms){
+        for(let surface in data.rooms[room].photos){
+            total += (data.rooms[room].photos[surface] || []).length
+        }
+    }
+
+    let processed = 0
+
+    // 🔥 SHOW LOADER
+    let loader = document.getElementById("zipLoader")
+    let text = document.getElementById("zipText")
+
+    loader.style.display = "flex"
+    text.innerText = `Zipping images: 0 / ${total}`
+
     for(let room in data.rooms){
 
         let roomFolder = zip.folder(room)
-
         let r = data.rooms[room]
 
         for(let surface in r.photos){
@@ -1314,27 +1339,31 @@ async function downloadAllImages(){
                 let src = await getPhotoFromDB(id)
                 if(!src) continue
 
-                // Convert base64 → blob
                 let blob = await fetch(src).then(res => res.blob())
 
                 let fileName = `${surface}_${i+1}.jpg`
-
                 roomFolder.file(fileName, blob)
+
+                // 🔥 UPDATE PROGRESS
+                processed++
+                text.innerText = `Zipping images: ${processed} / ${total}`
             }
         }
     }
 
-    // 🔥 Generate ZIP
-    zip.generateAsync({type:"blob"}).then(function(content){
+    text.innerText = "Finalizing ZIP..."
 
-        let a = document.createElement("a")
-        a.href = URL.createObjectURL(content)
-        a.download = "Site_Validation_Photos.zip"
-        a.click()
+    let content = await zip.generateAsync({type:"blob"})
 
-    })
+    let a = document.createElement("a")
+    a.href = URL.createObjectURL(content)
+    a.download = zipName
+    a.click()
 
-    alert("Images downloaded as ZIP ✅")
+    // 🔥 HIDE LOADER
+    loader.style.display = "none"
+
+    alert("Images downloaded successfully ✅")
 
     data.validationMeta.imagesDownloaded = true
     saveData()
@@ -1442,6 +1471,23 @@ event.data.data
 })
 })
 </script>
-
+<div id="zipLoader" style="
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+color:white;
+display:none;
+align-items:center;
+justify-content:center;
+z-index:9999;
+font-size:18px;
+text-align:center;
+">
+<span id="zipText">Preparing...</span>
+</div>
+  
 </body>
 </html>
