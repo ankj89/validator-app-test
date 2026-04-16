@@ -396,29 +396,39 @@ function endValidation(){
         return
     }
 
-    // 🔥 CLEAR EVERYTHING
-   let req = indexedDB.deleteDatabase("SiteValidatorDB")
-
-req.onsuccess = ()=>{
-    data = null
-
-    localStorage.removeItem("dbSizeMB")
-
-    alert("Validation completed ✅")
-
-    location.href = location.origin + location.pathname
-}
-
-req.onerror = ()=>{
-    alert("Error ending validation. Try again.")
-}
-
-    // 🔥 ADD RESET FLAG
-    localStorage.setItem("forceReset", "true")
+    // 🔥 Disable unload warning
     window.onbeforeunload = null
-    alert("Validation completed ✅") 
-    // 🔥 HARD RELOAD
- 
+
+    // 🔥 Show reset screen (prevents user interaction)
+    document.body.innerHTML = "<h2 style='text-align:center;margin-top:40px'>Finishing validation...</h2>"
+
+    let req = indexedDB.deleteDatabase("SiteValidatorDB")
+
+    req.onsuccess = ()=>{
+        console.log("DB deleted successfully")
+
+        // 🔥 Clear memory
+        data = null
+        roomOrder = [...defaultRooms]
+
+        // 🔥 Clear local storage
+        localStorage.removeItem("dbSizeMB")
+        localStorage.removeItem("forceReset")
+
+        // 🔥 Final message (only once)
+        alert("Validation completed ✅")
+
+        // 🔥 Clean reload (IMPORTANT)
+        location.href = location.origin + location.pathname
+    }
+
+    req.onerror = ()=>{
+        alert("Error ending validation. Try again.")
+    }
+
+    req.onblocked = ()=>{
+        alert("Close other tabs of this app and try again.")
+    }
 }
 /* =========================
    2. ADD SAVE FUNCTION
