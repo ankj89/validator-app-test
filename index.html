@@ -385,7 +385,7 @@ if(!pidVal || !cxVal || !cityVal){
     renderTabs(defaultRooms[0])
     openRoom(defaultRooms[0])
 }
-function endValidation(){
+async function endValidation(){
 
     if(!data.validationMeta.excelGenerated || !data.validationMeta.imagesDownloaded){
         alert("Please generate Excel and download images before ending validation")
@@ -396,38 +396,71 @@ function endValidation(){
         return
     }
 
-    // 🔥 Disable unload warning
+    // 🔥 STOP unload warning
     window.onbeforeunload = null
 
-    // 🔥 Show reset screen (prevents user interaction)
+    // 🔥 UI BLOCK
     document.body.innerHTML = "<h2 style='text-align:center;margin-top:40px'>Finishing validation...</h2>"
 
-    let req = indexedDB.deleteDatabase("SiteValidatorDB")
+    try{
 
-    req.onsuccess = ()=>{
-        console.log("DB deleted successfully")
+        // 🔥 FORCE CLOSE DB CONNECTION
+        if(db){
+            db.close()
+        }
 
-        // 🔥 Clear memory
-        data = null
-        roomOrder = [...defaultRooms]
+        // 🔥 UNREGISTER SERVICE WORKER (CRITICAL FIX)
+        if ('serviceWorker' in navigator) {
+            let regs = await navigator.serviceWorker.getRegistrations()
+            for(let reg of regs){
+                await reg.unregister()
+            }
+        }
 
-        // 🔥 Clear local storage
-        localStorage.removeItem("dbSizeMB")
-        localStorage.removeItem("forceReset")
+        // 🔥 DELETE DATABASE
+        let req = indexedDB.deleteDatabase("SiteValidatorDB")
 
-        // 🔥 Final message (only once)
-        alert("Validation completed ✅")
+        req.onsuccess = ()=>{
+            console.log("DB deleted")
 
-        // 🔥 Clean reload (IMPORTANT)
-        location.href = location.origin + location.pathname
-    }
+            localStorage.removeItem("dbSizeMB")
 
-    req.onerror = ()=>{
-        alert("Error ending validation. Try again.")
-    }
+         
 
-    req.onblocked = ()=>{
-        alert("Close other tabs of this app and try again.")
+            location.href = location.origin + location.pathname
+        }
+
+        req.onerror = ()=>{
+            console.error("Delete failed")
+
+            // 🔥 FALLBACK RESET (VERY IMPORTANT)
+            localStorage.clear()
+
+            alert("Validation completed (fallback reset)")
+
+            location.href = location.origin + location.pathname
+        }
+
+        req.onblocked = ()=>{
+            console.warn("Still blocked — forcing reset")
+
+            // 🔥 FORCE RESET ANYWAY
+            localStorage.clear()
+
+            alert("Validation completed (forced reset)")
+
+            location.href = location.origin + location.pathname
+        }
+
+    }catch(err){
+        console.error(err)
+
+        // 🔥 LAST RESORT
+        localStorage.clear()
+
+        alert("Reset completed (safe mode)")
+
+        location.reload()
     }
 }
 /* =========================
