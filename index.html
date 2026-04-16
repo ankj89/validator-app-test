@@ -238,7 +238,7 @@ const wallQuestions=["Is the wall a load-bearing wall/mivan construction/sheer w
 const defaultRooms=["Living Room","Kitchen","Bedroom 1","Bedroom 2","Bathroom 1","Bathroom 2","Balcony"]
 let approxSizeMB = parseFloat(localStorage.getItem("dbSizeMB") || "0")
 let db
-
+let isCameraOpen = false
 function initDB(){
 return new Promise((resolve, reject)=>{
 let request = indexedDB.open("SiteValidatorDB", 2) // version bump
@@ -998,16 +998,23 @@ overlay.innerHTML = `
 `
 
 document.body.appendChild(overlay)
+ isCameraOpen = true
+history.pushState({ editor: true }, "")
 let canvas = overlay.querySelector("#editorCanvas")
 let ctx = canvas.getContext("2d")
 
 canvas.style.touchAction = "none"
   /* CLOSE */
 overlay.querySelector("#closeBtn").onclick = () => {
-document.body.style.overflow = "auto"
-canvas.replaceWith(canvas.cloneNode(true))
-document.body.removeChild(overlay)
+    document.body.style.overflow = "auto"
+    canvas.replaceWith(canvas.cloneNode(true))
+    document.body.removeChild(overlay)
+
+    isCameraOpen = false
+
+    history.back()
 }
+
   
 /* SAVE */
 
@@ -1381,6 +1388,10 @@ async function openCamera(surface, room){
             `
 
             document.body.appendChild(overlay)
+            isCameraOpen = true
+
+            // 🔥 PUSH STATE
+            history.pushState({ camera: true }, "")
 
             let video = overlay.querySelector("video")
             video.srcObject = stream
@@ -1402,10 +1413,15 @@ async function openCamera(surface, room){
                 openEditorDirect(img, surface, room)
             }
 
-            overlay.querySelector("#closeCam").onclick = () => {
-                stream.getTracks().forEach(t => t.stop())
-                document.body.removeChild(overlay)
-            }
+           overlay.querySelector("#closeCam").onclick = () => {
+    stream.getTracks().forEach(t => t.stop())
+    document.body.removeChild(overlay)
+
+    isCameraOpen = false
+
+    // 🔥 FIX BACK STACK
+    history.back()
+}
 
             return
 
@@ -1721,6 +1737,25 @@ if(data.validationMeta?.started){
     document.getElementById("societyForm").innerHTML = ""
 }
 
+})
+ window.addEventListener("popstate", function(event){
+
+    if(isCameraOpen){
+
+        console.log("Back pressed → closing camera")
+
+        let overlay = document.querySelector("div[style*='z-index: 9999']")
+
+        if(overlay){
+            overlay.remove()
+        }
+
+        isCameraOpen = false
+
+        // 🔥 PREVENT EXIT
+        history.pushState(null, "")
+
+    }
 })
 </script>
 <div id="zipLoader" style="
