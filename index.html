@@ -947,7 +947,11 @@ let url = URL.createObjectURL(file)
 img.src = url
 
 img.onload = function(){
-
+if(img.width > 2000){
+    alert("Image too large. Please reduce camera resolution.")
+    return
+}
+ 
 let canvas = document.createElement("canvas")
 let ctx = canvas.getContext("2d")
 
@@ -1036,6 +1040,8 @@ btn.disabled = true
 try{
 
 let finalImg = canvas.toDataURL("image/jpeg", 0.7)
+ canvas.width = 0
+canvas.height = 0
 
 let id = "img_" + Date.now()
 
@@ -1425,9 +1431,28 @@ async function openCamera(surface, room){
 
             return
 
-        }catch(e){
-            console.log("Camera fallback", e)
         }
+      
+catch(e){
+    console.log("Camera fallback", e)
+
+    // 🔥 FORCE FILE INPUT (iOS SAFE)
+    let input = document.createElement("input")
+    input.type = "file"
+    input.accept = "image/*"
+    input.capture = "environment"
+
+    input.onchange = function(e){
+        let file = e.target.files[0]
+        if(file){
+            processImage(file, surface, room)
+        }
+    }
+
+    input.click()
+    return
+}
+     
     }
 
     // fallback
@@ -1570,7 +1595,8 @@ if(!confirm("This will delete all data including photos. Continue?")){
 
 // 🔥 BLOCK UI (optional but good)
 document.body.innerHTML = "<h2 style='text-align:center;margin-top:40px'>Resetting app...</h2>"
-
+// 🔥 WAIT FOR DB TO FULLY CLOSE (iOS FIX)
+await new Promise(r => setTimeout(r, 300))
 // 🔥 DELETE DB PROPERLY
 let req = indexedDB.deleteDatabase("SiteValidatorDB")
 
@@ -1662,10 +1688,17 @@ let fileName = `${cleanRoom}_${surface}_${i+1}.jpg`
 
     let content = await zip.generateAsync({type:"blob"})
 
+    let url = URL.createObjectURL(content)
+
+if(/iPhone|iPad|iPod/i.test(navigator.userAgent)){
+    alert("On iPhone: tap Share → Save to Files to download")
+    window.open(url)
+}else{
     let a = document.createElement("a")
-    a.href = URL.createObjectURL(content)
+    a.href = url
     a.download = zipName
     a.click()
+}
 
     // 🔥 HIDE LOADER
     loader.style.display = "none"
@@ -1696,7 +1729,10 @@ document.addEventListener("DOMContentLoaded", async ()=>{
 
 startVersionWatcher()
 await initDB()
-
+// 🔥 iOS SAFE HISTORY INIT
+setTimeout(()=>{
+    history.pushState(null, "")
+}, 500)
 // ✅ LOAD FROM DB
 let stored = await loadAppData()
 
