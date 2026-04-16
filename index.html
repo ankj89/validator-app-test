@@ -1808,14 +1808,39 @@ window.addEventListener("popstate", function(event){
         }
     }
 })
-// 🔥 HANDLE SERVICE WORKER FORCE RELOAD
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.addEventListener("message", event => {
-        if (event.data && event.data.type === "FORCE_RELOAD") {
-            console.log("New version active → reloading")
-            window.location.reload()
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", async () => {
+
+    try{
+
+        const reg = await navigator.serviceWorker.register("sw.js")
+
+        console.log("SW registered")
+
+        // 🔥 FORCE CHECK FOR UPDATE (VERY IMPORTANT)
+        reg.update()
+
+        // 🔥 LISTEN FOR NEW VERSION
+        reg.onupdatefound = () => {
+
+            const newWorker = reg.installing
+
+            newWorker.onstatechange = () => {
+
+                if (newWorker.state === "activated") {
+                    console.log("New SW activated → reloading")
+
+                    // 🔥 FORCE HARD RELOAD
+                    window.location.reload()
+                }
+            }
         }
-    })
+
+    }catch(err){
+        console.log("SW failed", err)
+    }
+
+  });
 }
  
 </script>
