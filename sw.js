@@ -28,7 +28,7 @@ self.addEventListener("install", event => {
     "./version.txt",
     "./xlsx.full.min.js",
     "./jszip.min.js"
-]);
+
             ]);
 
             self.skipWaiting();
