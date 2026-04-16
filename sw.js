@@ -2,7 +2,7 @@ const CACHE_PREFIX = "validator-";
 
 async function getVersion(){
     try{
-        let res = await fetch("/version.txt?ts=" + Date.now());
+        let res = await fetch("version.txt?ts=" + Date.now());
         let v = await res.text();
         return v.trim();
     }catch(e){
@@ -45,14 +45,31 @@ self.addEventListener("activate", event => {
             let keys = await caches.keys();
 
             await Promise.all(
-                keys.map(k=>{
-                    if(k.startsWith(CACHE_PREFIX) && k !== currentCache){
-                        return caches.delete(k);
-                    }
-                })
-            );
+    keys.map(k=>{
+        if(
+            k.startsWith(CACHE_PREFIX) &&
+            k !== currentCache &&
+            k !== CACHE_PREFIX + "dynamic"
+        ){
+            return caches.delete(k);
+        }
+    })
+);
 
             self.clients.claim();
+
+            // 🔥 FORCE RELOAD ALL CLIENTS
+let clientsList = await self.clients.matchAll({ type: "window" })
+
+clientsList.forEach(client => {
+    client.postMessage({ type: "FORCE_RELOAD" })
+})
+            // 🔥 FORCE RELOAD ALL CLIENTS
+let clientsList = await self.clients.matchAll({ type: "window" })
+
+clientsList.forEach(client => {
+    client.postMessage({ type: "FORCE_RELOAD" })
+})
         })()
     );
 });
@@ -60,9 +77,37 @@ self.addEventListener("activate", event => {
 /* FETCH */
 self.addEventListener("fetch", event => {
 
+    const url = new URL(event.request.url)
+
+    // 🔥 ALWAYS FETCH FRESH HTML (prevents stale app)
+    if (url.pathname.endsWith(".html") || url.pathname === "/") {
+        event.respondWith(
+            fetch(event.request).catch(() => caches.match("/index.html"))
+        )
+        return
+    }
+
+    // 🔥 CACHE-FIRST FOR STATIC ASSETS
+    if (
+        url.pathname.endsWith(".js") ||
+        url.pathname.endsWith(".css") ||
+        url.pathname.endsWith(".json")
+    ) {
+        event.respondWith(
+            caches.match(event.request).then(res => {
+                return res || fetch(event.request).then(networkRes => {
+                    return caches.open(CACHE_PREFIX + "dynamic").then(cache => {
+                        cache.put(event.request, networkRes.clone())
+                        return networkRes
+                    })
+                })
+            })
+        )
+        return
+    }
+
+    // 🔥 DEFAULT NETWORK-FIRST
     event.respondWith(
-        caches.match(event.request).then(res=>{
-            return res || fetch(event.request);
-        })
-    );
-});
+        fetch(event.request).catch(() => caches.match(event.request))
+    )
+})
