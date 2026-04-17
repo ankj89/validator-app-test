@@ -563,14 +563,71 @@ const container = document.getElementById("roomTabs")
 
 container.innerHTML = roomOrder.map(r=>`
 <span class="roomTab" 
-style="${r===activeRoom ? 'background:#1e3d8f;color:white' : ''}"
-onclick="openRoom('${r}')">
-${r}
+style="${r===activeRoom ? 'background:#1e3d8f;color:white' : ''}">
+    
+<span onclick="openRoom('${r}')">${r}</span>
+
+<span onclick="renameRoom('${r}')" style="margin-left:6px;cursor:pointer;">✏️</span>
+
+<span onclick="deleteRoom('${r}')" style="margin-left:6px;color:red;cursor:pointer;">❌</span>
+
 </span>
 `).join("");
 
 }
+function calculateProgress(room){
 
+let r = data.rooms[room]
+let total = roomQuestions.length + wallQuestions.length
+let answered = 0
+
+roomQuestions.forEach(q=>{
+if(r.room[q]) answered++
+})
+
+wallQuestions.forEach(q=>{
+if(r.wall[q]) answered++
+})
+
+return Math.round((answered / total) * 100)
+} 
+function renameRoom(oldName){
+
+let newName = prompt("Enter new room name", oldName)
+if(!newName || newName === oldName) return
+
+if(data.rooms[newName]){
+    alert("Room already exists")
+    return
+}
+
+// move data
+data.rooms[newName] = data.rooms[oldName]
+delete data.rooms[oldName]
+
+// update order
+roomOrder = roomOrder.map(r => r === oldName ? newName : r)
+
+saveData()
+renderTabs(newName)
+openRoom(newName)
+}
+function deleteRoom(room){
+
+if(!confirm("Delete this room?")) return
+
+delete data.rooms[room]
+roomOrder = roomOrder.filter(r => r !== room)
+
+saveData()
+
+if(roomOrder.length){
+    renderTabs(roomOrder[0])
+    openRoom(roomOrder[0])
+}else{
+    document.getElementById("roomForm").innerHTML = ""
+}
+} 
 function scrollToNext(currentDiv){
 let all=document.querySelectorAll(".statusPending")
 for(let el of all){
@@ -631,7 +688,17 @@ renderTabs(room)
 
 const container=document.getElementById("roomForm")
 container.innerHTML=""
+let progress = calculateProgress(room)
 
+let progressDiv = document.createElement("div")
+progressDiv.innerHTML = `
+<div>Progress: ${progress}%</div>
+<div class="progressBar">
+    <div class="progressFill" style="width:${progress}%"></div>
+</div>
+`
+
+container.appendChild(progressDiv)
 function createAccordion(title){
 let acc=document.createElement("div")
 acc.className="accordion"
@@ -768,22 +835,7 @@ let photoSection=createAccordion("Site Photographs")
 photoSection.setAttribute("data-section","photo")
 
 refreshPhotoSection(room) 
-/* ✅ NEXT ROOM BUTTON (CORRECT PLACE) */
-let index = roomOrder.indexOf(room)
 
-let nextBtn=document.createElement("button")
-
-if(index === roomOrder.length - 1){
-nextBtn.innerText="Finish ✔"
-}else{
-nextBtn.innerText=`Next: ${roomOrder[index+1]} →`
-}
-
-nextBtn.style.marginTop="10px"
-
-nextBtn.onclick=()=>goToNextRoom(room)
-
-container.appendChild(nextBtn)
 
 
   
@@ -843,30 +895,31 @@ Object.keys(data.rooms).forEach(room=>{
 
 let r = data.rooms[room]
 
-wallQuestions.forEach(q=>{
-rows.push({
-...data.project,
-Room: room,
-Section: "Wall",
-Item: q,
-Value: r.wall[q] || "",
-Walls: (r.wallSel[q] || []).join(","),
-Comments: r.wall[q+"-c"] || ""
-})
-})
+// 🔥 CHECK IF ROOM HAS ANY DATA
+let hasData = false
 
+// Room answers
 roomQuestions.forEach(q=>{
-rows.push({
-...data.project,
-Room: room,
-Section: "Room",
-Item: q,
-Value: r.room[q] || "",
-Comments: r.room[q+"-c"] || ""
-})
+    if(r.room[q]) hasData = true
 })
 
+// Wall answers
+wallQuestions.forEach(q=>{
+    if(r.wall[q]) hasData = true
 })
+
+// Measurements
+Object.values(r.measurement || {}).forEach(val=>{
+    if(val) hasData = true
+})
+
+// (Optional) Photos
+Object.values(r.photos || {}).forEach(arr=>{
+    if(arr && arr.length > 0) hasData = true
+})
+
+// ❌ SKIP EMPTY ROOM
+if(!hasData) return
 
 let wb = XLSX.utils.book_new()
 
