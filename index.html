@@ -1207,17 +1207,26 @@ canvas.addEventListener("pointercancel", ()=>{
  
 
 /* TEXT */
-canvas.addEventListener("click", (e)=>{
-if(mode === "text"){
-let txt = prompt("Enter note")
-if(txt){
-ctx.fillStyle = "red"
-// 🔥 Dynamic font
-ctx.font = `${Math.max(20, canvas.width / 25)}px Arial`
-let p = getCoords(e)
-ctx.fillText(txt, p.x, p.y)
-}
-}
+canvas.addEventListener("pointerdown", (e)=>{
+
+    if(mode !== "text") return
+
+    // 🔥 STOP DRAW FROM ALSO TRIGGERING
+    e.preventDefault()
+
+    let txt = prompt("Enter note")
+
+    if(txt){
+
+        const p = getCoords(e)
+
+        ctx.fillStyle = "red"
+        ctx.font = `${Math.max(20, canvas.width / 25)}px Arial`
+        ctx.textBaseline = "top"
+
+        ctx.fillText(txt, p.x, p.y)
+    }
+
 })
 
 
