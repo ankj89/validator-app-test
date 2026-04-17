@@ -904,65 +904,84 @@ photos:{NW:[],EW:[],SW:[],WW:[],Ceiling:[],Floor:[]}
 
 saveData()
 
-let rows=[]
+/* =========================
+   🔴 TAB 1: VALIDATION DATA (LEGACY FORMAT)
+========================= */
+
+let rows = []
 
 Object.keys(data.rooms).forEach(room=>{
 
 let r = data.rooms[room]
 
-// 🔥 CHECK IF ROOM HAS ANY DATA
-let hasData = false
+let base = {
+    pid: data.project?.pid || "",
+    cx: data.project?.cx || "",
+    city: data.project?.city || "",
+    address: data.project?.address || "",
+    society: data.project?.society || "",
+    flat: data.project?.flat || "",
+    floorNo: data.project?.floorNo || "",
+    Room: room
+}
 
-roomQuestions.forEach(q=>{
-    if(r.room[q]) hasData = true
-})
-
+/* WALL QUESTIONS */
 wallQuestions.forEach(q=>{
-    if(r.wall[q]) hasData = true
+rows.push({
+    ...base,
+    Section: "Wall",
+    Item: q,
+    Value: r.wall[q] || "",
+    Walls: (r.wallSel[q] || []).join(", "),
+    Comments: r.wall[q+"-c"] || ""
+})
 })
 
-Object.values(r.measurement || {}).forEach(val=>{
-    if(val !== "" && val !== null && val !== undefined){
-        hasData = true
-    }
-})
-
-Object.values(r.photos || {}).forEach(arr=>{
-    if(arr && arr.length > 0) hasData = true
-})
-
-if(!hasData) return
-
-/* ✅ BUILD ROW */
-let row = { Room: room }
-
-/* ROOM ANSWERS */
+/* ROOM QUESTIONS */
 roomQuestions.forEach(q=>{
-    row[q] = r.room[q] || ""
+rows.push({
+    ...base,
+    Section: "Room",
+    Item: q,
+    Value: r.room[q] || "",
+    Walls: "",
+    Comments: r.room[q+"-c"] || ""
 })
-
-/* WALL ANSWERS */
-wallQuestions.forEach(q=>{
-    row[q] = r.wall[q] || ""
 })
-
-/* MEASUREMENTS */
-Object.keys(r.measurement || {}).forEach(k=>{
-    row[k] = r.measurement[k] || ""
-})
-
-rows.push(row)
 
 })
 
+/* =========================
+   🔴 CREATE WORKBOOK
+========================= */
 
- 
 let wb = XLSX.utils.book_new()
 
+/* TAB 1 */
 let ws = XLSX.utils.json_to_sheet(rows)
 XLSX.utils.book_append_sheet(wb, ws, "Validation Data")
 
-/* ✅ MEASUREMENT WITH TIMESTAMPS */
+/* =========================
+   🔴 TAB 2: SOCIETY CONSTRAINTS (AS YOU HAD)
+========================= */
+
+let constraintRows = []
+
+societyQuestions.forEach(q=>{
+constraintRows.push({
+Category: q.category,
+Question: q.label,
+Value: (data.constraints && data.constraints[q.key]) || ""
+})
+})
+
+let ws2 = XLSX.utils.json_to_sheet(constraintRows)
+XLSX.utils.book_append_sheet(wb, ws2, "Society Constraints")
+
+/* =========================
+   🔴 TAB 3: MEASUREMENTS
+========================= */
+
 let measureRows=[]
 
 Object.keys(data.rooms).forEach(room=>{
@@ -970,6 +989,8 @@ Object.keys(data.rooms).forEach(room=>{
 let m = data.rooms[room].measurement || {}
 
 let row = { 
+    pid: data.project?.pid || "",
+    cx: data.project?.cx || "",
     Room: room,
     Validation_Start: data.validationMeta?.startTime || "",
     Validation_End: data.validationMeta?.endTime || ""
@@ -983,38 +1004,31 @@ measureRows.push(row)
 
 })
 
-let ws2 = XLSX.utils.json_to_sheet(measureRows)
-XLSX.utils.book_append_sheet(wb, ws2, "Measurements")
+let ws3 = XLSX.utils.json_to_sheet(measureRows)
+XLSX.utils.book_append_sheet(wb, ws3, "Measurements")
 
-/* ✅ SUMMARY SHEET */
+/* =========================
+   🔴 TAB 4: SUMMARY
+========================= */
+
 let summary = [{
 PID: data.project?.pid || "",
 Cx: data.project?.cx || "",
+City: data.project?.city || "",
 Start_Time: data.validationMeta?.startTime || "",
 End_Time: data.validationMeta?.endTime || ""
 }]
 
-let wsSummary = XLSX.utils.json_to_sheet(summary)
-XLSX.utils.book_append_sheet(wb, wsSummary, "Summary")
+let ws4 = XLSX.utils.json_to_sheet(summary)
+XLSX.utils.book_append_sheet(wb, ws4, "Summary")
 
-/* CONSTRAINTS */
-let constraintRows = []
-
-societyQuestions.forEach(q=>{
-constraintRows.push({
-Category: q.category,
-Question: q.label,
-Value: (data.constraints && data.constraints[q.key]) || ""
-})
-})
-
-let ws3 = XLSX.utils.json_to_sheet(constraintRows)
-XLSX.utils.book_append_sheet(wb, ws3, "Society Constraints")
+/* =========================
+   🔴 FILE NAME
+========================= */
 
 let pid = data.project?.pid || "PID"
 let cx = data.project?.cx || "Cx"
 
-// 🔥 Clean values (remove spaces/special chars)
 pid = pid.replace(/[^a-zA-Z0-9]/g, "_")
 cx = cx.replace(/[^a-zA-Z0-9]/g, "_")
 
@@ -1022,9 +1036,14 @@ let fileName = `${pid}_${cx}_site_validation_data.xlsx`
 
 XLSX.writeFile(wb, fileName)
 
+/* =========================
+   🔴 FLAGS
+========================= */
+
 data.validationMeta.excelGenerated = true
 saveData()
 renderAppSections()
+
 }
 
 function processImage(file, surface, room){
