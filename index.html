@@ -203,7 +203,104 @@ const measurementFields = [
 
   
 ]
+const questionConfig = {
 
+"Living Room": {
+    room: [
+        "Existing flooring in good condition with appropriate slope/levels?",
+        "Are existing walls in plumb/line and level? Capture room diagonals in measurement section",
+        "Is there level difference in the true ceiling?Capture floor to ceiling dimesions in measurement section",
+        "Are there any utilities (sprinkler pipes, plumbing line, ducts) or cross beams running on the ceiling? Capture the beam bottom to floor mesurement(in mm), Sprinkler head to Floor measurement(in mm) in mesurements section",
+        "Are the existing doors and door frame in good condition?",
+        "Are the existing windows and window frames in good condition?"
+    ],
+    wall: [
+        "Are there major cracks that require structural repair?Mark in the structural layout as well",
+        "Does the existing wall surface have undulations or uneven surface?Capture mesurements in measurement section",
+        "Is there a AC point(low side works) provided?",
+        "Can split AC be installed post false ceiling w/o pockets? Capture Wall wise Door/Window Soffit to Ceiling measurement in mesurement section"
+    ]
+},
+"Bedroom": {
+    room: [
+        "Existing flooring in good condition with appropriate slope/levels?",
+        "Are existing walls in plumb/line and level? Capture room diagonals in measurement section",
+        "Is there level difference in the true ceiling?Capture floor to ceiling dimesions in measurement section",
+        "Are there any utilities (sprinkler pipes, plumbing line, ducts) or cross beams running on the ceiling? Capture the beam bottom to floor mesurement(in mm), Sprinkler head to Floor measurement(in mm) in mesurements section",
+        "Are the existing doors and door frame in good condition?",
+        "Are the existing windows and window frames in good condition?"
+    ],
+    wall: [
+        "Are there major cracks that require structural repair?Mark in the structural layout as well",
+        "Does the existing wall surface have undulations or uneven surface?Capture mesurements in measurement section",
+        "Is there a AC point(low side works) provided?",
+        "Can split AC be installed post false ceiling w/o pockets? Capture Wall wise Door/Window Soffit to Ceiling measurement in mesurement section"
+    ]
+}, 
+
+"Kitchen": {
+    room: [
+        "Are there plumbing points available?",
+        "Are there any issues with the existing plumbing lines, such as leaks etc that require replacement or repair?",
+        "Are existing plumbing lines CPVC/UPVC?",
+        "Is the main inlet valve accesible?"
+    ],
+    wall: [
+        "Are there evidence of water seepage or dampness that require waterproofing treatment? Mark on the structural layout as well and inform Cx",
+        "Is there a suitable location for core cut available?"
+    ]
+},
+
+"Bathroom": {
+    room: [
+        "Is there sufficent space to provide shower cubicle?",
+        "Is it possible to relocate the WC, without any modifications to external pipeline/drain line?",
+        "Are there plumbing points available?"
+    ],
+    wall: [
+        "Are there evidence of water seepage or dampness that require waterproofing treatment?",
+        "Are there hairline crack/minor cracks/loose plaster requiring re plastering??"
+    ]
+}
+
+}
+
+function getRoomType(room){
+
+room = room.toLowerCase()
+
+if(room.includes("bedroom")) return "Bedroom"
+if(room.includes("bath")) return "Bathroom"
+if(room.includes("toilet")) return "Bathroom"
+if(room.includes("kitchen")) return "Kitchen"
+if(room.includes("living")) return "Living Room"
+if(room.includes("washroom")) return "Bathroom"
+return room // exact match fallback
+}
+function getRoomQuestions(room){
+
+let type = getRoomType(room)
+
+if(questionConfig[type]?.room){
+    return questionConfig[type].room
+}
+
+return roomQuestions // fallback (your full list)
+}
+
+function getWallQuestions(room){
+
+let type = getRoomType(room)
+
+if(questionConfig[type]?.wall){
+    return questionConfig[type].wall
+}
+
+return wallQuestions // fallback
+}
+
+
+ 
 const roomQuestions=[
 "Existing flooring in good condition with appropriate slope/levels?",
 "Is existing skirting flushed?",   
@@ -593,14 +690,17 @@ style="${r===activeRoom ? 'background:#1e3d8f;color:white' : ''}">
 function calculateProgress(room){
 
 let r = data.rooms[room]
-let total = roomQuestions.length + wallQuestions.length
+let rq = getRoomQuestions(room)
+let wq = getWallQuestions(room)
+
+let total = rq.length + wq.length
 let answered = 0
 
-roomQuestions.forEach(q=>{
+rq.forEach(q=>{
 if(r.room[q]) answered++
 })
 
-wallQuestions.forEach(q=>{
+wq.forEach(q=>{
 if(r.wall[q]) answered++
 })
 
@@ -740,7 +840,7 @@ let wallSection=createAccordion("Wall Questions")
 
 
 
-wallQuestions.forEach(q=>{
+getWallQuestions(room).forEach(q=>{
 let div=document.createElement("div")
 div.className="questionBlock "+(r.wall[q]?"statusAnswered":"statusPending")
 
@@ -788,7 +888,7 @@ wallSection.appendChild(div)
 /* ROOM */
 let roomSection=createAccordion("Room Questions")
 
-roomQuestions.forEach(q=>{
+getRoomQuestions(room).forEach(q=>{
 let div=document.createElement("div")
 div.className="questionBlock "+(r.room[q]?"statusAnswered":"statusPending")
 
@@ -926,7 +1026,7 @@ let base = {
 }
 
 /* WALL QUESTIONS */
-wallQuestions.forEach(q=>{
+getWallQuestions(room).forEach(q=>{
 rows.push({
     ...base,
     Section: "Wall",
@@ -938,7 +1038,7 @@ rows.push({
 })
 
 /* ROOM QUESTIONS */
-roomQuestions.forEach(q=>{
+getRoomQuestions(room).forEach(q=>{
 rows.push({
     ...base,
     Section: "Room",
