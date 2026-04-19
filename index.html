@@ -502,21 +502,26 @@ if(!data){
   
 
 function normalizeData(){
-if(!data.rooms)data.rooms={}
+
+if(!data.rooms) data.rooms = {}
+
 defaultRooms.forEach(r=>{
-if(!data.rooms[r])data.rooms[r]={
-    room:{},
-    wall:{},
-    wallSel:{},
-    measurement:{},
-    elevations:[], // 🔥 ADD
-    photos:{
-        "Ceiling": [],
-        "Floor": []
+if(!data.rooms[r]){
+    data.rooms[r]={
+        room:{},
+        wall:{},
+        wallSel:{},
+        measurement:{},
+        elevations:[],
+        photos:{
+            Ceiling:[],
+            Floor:[]
+        }
     }
 }
 })
-normalizeData()
+
+}
 
  
 function ensureValidationMeta(){
@@ -540,21 +545,24 @@ let input = prompt("Enter elevation numbers (comma separated)\nExample: E5,E6,E7
 
 if(input){
 
-r.elevations = input.split(",").map(x=>{
+let arr = input.split(",").map(x=>{
 let val = x.trim().toUpperCase()
 if(!val.startsWith("E")) val = "E" + val
 return val
 })
 
+// 🔥 REMOVE DUPLICATES
+r.elevations = [...new Set(arr)]
+
 }else{
 r.elevations = ["E1","E2","E3","E4"]
 }
 
-/* 🔥 CRITICAL: INIT PHOTO BUCKETS */
+/* 🔥 INIT PHOTO BUCKETS */
 if(!r.photos) r.photos = {}
 
 r.elevations.forEach(e=>{
-    if(!r.photos[e]) r.photos[e] = []
+if(!r.photos[e]) r.photos[e] = []
 })
 
 saveData()
@@ -845,7 +853,7 @@ if(r.room[q]) answered++
 })
 
 wq.forEach(q=>{
-if(r.wall[q]) answered++
+if(r.wall[q] || (r.wallSel[q] && r.wallSel[q].length)) answered++
 })
 
 return Math.round((answered / total) * 100)
@@ -1152,9 +1160,17 @@ normalizeData()
 
 roomOrder.forEach(room=>{
 if(!data.rooms[room]){
+
 data.rooms[room]={
-room:{},wall:{},wallSel:{},measurement:{},
-photos:{NW:[],EW:[],SW:[],WW:[],Ceiling:[],Floor:[]}
+room:{},
+wall:{},
+wallSel:{},
+measurement:{},
+elevations:[],
+photos:{
+    Ceiling:[],
+    Floor:[]
+}
 }
 }
 })
@@ -1887,7 +1903,7 @@ let wasOpen = photoSection && photoSection.style.display === "block"
 /* CLEAR */
 photoSection.innerHTML = ""
 
-let elevations = data.rooms[room].elevations || []
+let elevations = getElevations(room) // 🔥 ensures always present
 
 const surfaces = [...elevations, "Ceiling", "Floor"]
 
