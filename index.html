@@ -132,17 +132,21 @@ const societyQuestions = [
 
 /* EXECUTION */
 {key:"waterPoint", label:"Is there an active water supply point at site location?", category:"Execution Constraints", options:["Yes","No"]},
-{key:"electricPoint", label:"Is there an active power supply at site location?", category:"Execution Constraints", options:["Yes","No"]},
+ {key:"electricPoint", label:"Is there an active power supply at site location?", category:"Execution Constraints", options:["Yes","No"]},
  {key:"gassline", label:"Is there LPG gas line installed at site location?", category:"Execution Constraints", options:["Yes","No"]}, 
  {key:"dgbackup", label:"Is there avaiability of DG/power backup?", category:"Execution Constraints", options:["Yes","No"]}, 
-{key:"workNOC", label:"Is builder/scoiety permission required to start the work?", category:"Execution Constraints", options:["Yes","No"]},
+ {key:"workNOC", label:"Is builder/scoiety permission required to start the work?", category:"Execution Constraints", options:["Yes","No"]},
+ {key:"cxstay", label:"Will cx stay during execution?", category:"Execution Constraints",options:["Yes","No"]},
+ {key:"fpDC", label:"(only for tier 2)Do we need to take Floor protection & Deep cleaning in onsite works?", category:"Execution Constraints",options:["Yes","No"]},
 {key:"workNOCpolice", label:"Is police verification required for labours?", category:"Execution Constraints", options:["Yes","No"]},  
-{key:"societyWorktimings", label:"Permissible work days and timings", category:"Execution Constraints", type:"textarea"},
-{key:"cxstay", label:"Will cx stay during execution?", category:"Execution Constraints",options:["Yes","No"]},
+{key:"societyWorktimings", label:"Permissible work days and timings", category:"Execution Constraints", type:"textarea"}
+
+ 
 /* MATERIAL */
 {key:"societyRestrictions", label:"Other restrictions on material/specification mandated by builder/society?", category:"Material Specification Constraint", type:"textarea"},
 {key:"faciaRestrictions", label:"Can we do modification on external walls in corridor or facia of building?", category:"Material Specification Constraint", options:["Yes","No"]},
 {key:"electricalmaterial", label:"What is the make and model of existing switchboard fixtures?", category:"Material Specification Constraint", type:"textarea"}
+ 
 ];
   
 const walls=["NW","EW","SW","WW"]
@@ -208,73 +212,176 @@ const questionConfig = {
 "Living Room": {
     room: [
         "Existing flooring in good condition with appropriate slope/levels?",
-        "Are existing walls in plumb/line and level? Capture room diagonals in measurement section",
-        "Is there level difference in the true ceiling?Capture floor to ceiling dimesions in measurement section",
-        "Are there any utilities (sprinkler pipes, plumbing line, ducts) or cross beams running on the ceiling? Capture the beam bottom to floor mesurement(in mm), Sprinkler head to Floor measurement(in mm) in mesurements section",
+        "Is existing skirting flushed?",   
+        "In case of room extesnion is there a requirement to level the floors?Ex : balcony extensions",
+        "Are there visible undulations or uneven surface on the true ceiling?Take photo with annotation",
+        "Is there any evidence of water leaks or moisture damage on the existing true ceiling?Take photo with annotation",
+        "Are there any issues with the existing false ceiling that require removal and replacement?",
         "Are the existing doors and door frame in good condition?",
-        "Are the existing windows and window frames in good condition?"
+        "Are the existing windows and window frames in good condition?",
+        "Does the existing windows have space to install additional tracks?",
+        "Does existing grills require repair or re painting?", 
+        "Is there sufficient space to provide swing shutters in wardrobes/storages etc?",
+        "Is there sufficient space to provide bed with drawers?", 
+        "Is existing wiring in good condition and does not require replacement?", 
+        "Does the existing circuit have sufficient load capacity or will require change or new circuit?"
     ],
-    wall: [
-        "Are there major cracks that require structural repair?Mark in the structural layout as well",
-        "Does the existing wall surface have undulations or uneven surface?Capture mesurements in measurement section",
-        "Is there a AC point(low side works) provided?",
-        "Can split AC be installed post false ceiling w/o pockets? Capture Wall wise Door/Window Soffit to Ceiling measurement in mesurement section"
+    wall: [      
+ "Is the wall a load-bearing wall/mivan construction/sheer wall?Mark in the structural layout as well",
+"Is the wall dry wall or gypsum wall?Mark in the structural layout as well",
+"Are there niches present?Please take photo with annotation",                     
+"Are there major cracks that require structural repair?Please take photo with annotation",
+"Are there hairline crack/minor cracks/loose plaster requiring re plastering?? Please take photo with annotation",
+"Are there evidence of water seepage or dampness that require waterproofing treatment?Please take photo with annotation",
+"Does the existing wall surface have undulations or uneven surface?",
+"Is there a suitable location for core cut available?",
+"Are existing switches and sockets in working condition?Mark modules and configuration on layout",
+"Is there a AC point(low side works) provided?",
+"Is panelling/pelmet required to be done for AC installation?",
+"Are there any darker shade on the wall?",
+"Is the existing paint in good condition, without excessive peeling, flaking, or bubbling?"
     ]
 },
+
+ 
 "Bedroom": {
     room: [
         "Existing flooring in good condition with appropriate slope/levels?",
-        "Are existing walls in plumb/line and level? Capture room diagonals in measurement section",
-        "Is there level difference in the true ceiling?Capture floor to ceiling dimesions in measurement section",
-        "Are there any utilities (sprinkler pipes, plumbing line, ducts) or cross beams running on the ceiling? Capture the beam bottom to floor mesurement(in mm), Sprinkler head to Floor measurement(in mm) in mesurements section",
+        "Is existing skirting flushed?",   
+        "In case of room extension is there a requirement to level the floors?Ex : balcony extensions",
+        "Are there visible undulations or uneven surface on the true ceiling?Take photo with annotation",
+        "Is there any evidence of water leaks or moisture damage on the existing true ceiling?Take photo with annotation",
+        "Are there any issues with the existing false ceiling that require removal and replacement?",
         "Are the existing doors and door frame in good condition?",
-        "Are the existing windows and window frames in good condition?"
+        "Are the existing windows and window frames in good condition?",
+        "Does the existing windows have space to install additional tracks?",
+        "Does existing grills require repair or re painting?", 
+        "Is there sufficient space to provide swing shutters in wardrobes/storages etc?",
+        "Is there sufficient space to provide bed with drawers?", 
+        "Is existing wiring in good condition and does not require replacement?", 
+        "Does the existing circuit have sufficient load capacity or will require change or new circuit?"
     ],
-    wall: [
-        "Are there major cracks that require structural repair?Mark in the structural layout as well",
-        "Does the existing wall surface have undulations or uneven surface?Capture mesurements in measurement section",
-        "Is there a AC point(low side works) provided?",
-        "Can split AC be installed post false ceiling w/o pockets? Capture Wall wise Door/Window Soffit to Ceiling measurement in mesurement section"
+    wall: [      
+ "Is the wall a load-bearing wall/mivan construction/sheer wall?Mark in the structural layout as well",
+"Is the wall dry wall or gypsum wall?Mark in the structural layout as well",
+"Are there niches present?Please take photo with annotation",                     
+"Are there major cracks that require structural repair?Please take photo with annotation",
+"Are there hairline crack/minor cracks/loose plaster requiring re plastering?? Please take photo with annotation",
+"Are there evidence of water seepage or dampness that require waterproofing treatment?Please take photo with annotation",
+"Does the existing wall surface have undulations or uneven surface?,
+"Is there a suitable location for core cut available?",
+"Are existing switches and sockets in working condition?Mark modules and configuration on layout",
+"Is there a AC point(low side works) provided?",
+"Is panelling/pelmet required to be done for AC installation?",
+"Are there any darker shade on the wall?",
+"Is the existing paint in good condition, without excessive peeling, flaking, or bubbling?"
     ]
 }, 
 
 "Kitchen": {
     room: [
+      "Existing flooring in good condition with appropriate slope/levels?",
+       "Are there visible undulations or uneven surface on the true ceiling?Take photo with annotation",
+        "Is there any evidence of water leaks or moisture damage on the existing true ceiling?Take photo with annotation",
+        "Is existing wiring in good condition and does not require replacement?", 
+        "Does the existing circuit have sufficient load capacity or will require change or new circuit?",
         "Are there plumbing points available?",
         "Are there any issues with the existing plumbing lines, such as leaks etc that require replacement or repair?",
         "Are existing plumbing lines CPVC/UPVC?",
         "Is the main inlet valve accesible?"
     ],
     wall: [
-        "Are there evidence of water seepage or dampness that require waterproofing treatment? Mark on the structural layout as well and inform Cx",
-        "Is there a suitable location for core cut available?"
+     "Is the wall a load-bearing wall/mivan construction/sheer wall?Mark in the structural layout as well",
+"Is the wall dry wall or gypsum wall?Mark in the structural layout as well",
+     "Are there major cracks that require structural repair?Please take photo with annotation",
+"Are there hairline crack/minor cracks/loose plaster requiring re plastering?? Please take photo with annotation",
+"Are there evidence of water seepage or dampness that require waterproofing treatment? Mark on the structural layout as well and inform Cx",
+     "Does the existing wall surface have undulations or uneven surface?,
+        "Is there a suitable location for core cut available?",
+     "Are existing switches and sockets in working condition?Mark modules and configuration on layout",
+     "Are there any darker shade on the wall?",
+"Is the existing paint in good condition, without excessive peeling, flaking, or bubbling?"
     ]
 },
 
 "Bathroom": {
     room: [
+     "Is there any evidence of water leaks or moisture damage on the existing true ceiling?Take photo with annotation",
+     "Is existing wiring in good condition and does not require replacement?",
+     "Are the existing doors and door frame in good condition?",
+     "Are the existing windows and window frames in good condition?",
+     "Is there sufficient space to provide swing shutters in wardrobes/storages etc?",
         "Is there sufficent space to provide shower cubicle?",
         "Is it possible to relocate the WC, without any modifications to external pipeline/drain line?",
-        "Are there plumbing points available?"
+      "Are there any issues with the existing plumbing lines, such as leaks etc that require replacement or repair?",
+        "Are existing plumbing lines CPVC/UPVC?",
+        "Is the main inlet valve accesible?"
     ],
     wall: [
-        "Are there evidence of water seepage or dampness that require waterproofing treatment?",
-        "Are there hairline crack/minor cracks/loose plaster requiring re plastering??"
+     "Is the wall a load-bearing wall/mivan construction/sheer wall?Mark in the structural layout as well",
+    "Are there major cracks that require structural repair?Please take photo with annotation",
+"Are there hairline crack/minor cracks/loose plaster requiring re plastering?? Please take photo with annotation",
+     "Are existing switches and sockets in working condition?Mark modules and configuration on layout",
+        "Are there evidence of water seepage or dampness that require waterproofing treatment?"
+    ]
+ "Balcony": {
+    room: [
+     "Existing flooring in good condition with appropriate slope/levels?",
+     "In case of room extension is there a requirement to level the floors?Ex : balcony extensions",
+     "Do we have sufficient opening available for furniture movement/shifting?",  
+     "Is there any evidence of water leaks or moisture damage on the existing true ceiling?Take photo with annotation",
+     "Is existing wiring in good condition and does not require replacement?",
+     "Are there plumbing/drain points available?", 
+     "Is the main inlet valve accesible?"
+    ],
+    wall: [
+     "Is the wall a load-bearing wall/mivan construction/sheer wall?Mark in the structural layout as well",
+     "Are there major cracks that require structural repair?Please take photo with annotation",
+     "Are there hairline crack/minor cracks/loose plaster requiring re plastering?? Please take photo with annotation",
+      "Are there evidence of water seepage or dampness that require waterproofing treatment?",
+     "Is there a suitable location for core cut available?",
+      "Are existing switches and sockets in working condition?Mark modules and configuration on layout"
     ]
 }
 
 }
 
 function getRoomType(room){
+if(!room) return ""
 
-room = room.toLowerCase()
+let r = room.toLowerCase()
 
-if(room.includes("bedroom")) return "Bedroom"
-if(room.includes("bath")) return "Bathroom"
-if(room.includes("toilet")) return "Bathroom"
-if(room.includes("kitchen")) return "Kitchen"
-if(room.includes("living")) return "Living Room"
-if(room.includes("washroom")) return "Bathroom"
+// 🔥 REMOVE SPECIAL CHARACTERS
+r = r.replace(/[^a-z0-9]/g, "")
+
+if(r.includes("bedroom")) return "Bedroom"
+ if(r.includes("passage")) return "Living Room"
+ if(r.includes("guest")) return "Bedroom"
+  if(r.includes("kid's")) return "Bedroom"
+  if(r.includes("kids")) return "Bedroom"
+  if(r.includes("kid")) return "Bedroom"
+  if(r.includes("play")) return "Bedroom"
+if(r.includes("bed")) return "Bedroom"
+if(r.includes("bath")) return "Bathroom"
+ if(r.includes("bathroom")) return "Bathroom"
+if(r.includes("toilet")) return "Bathroom"
+if(r.includes("kitchen")) return "Kitchen"
+if(r.includes("living")) return "Living Room"
+ if(r.includes("hall")) return "Living Room"
+if(r.includes("store")) return "Living Room"
+ if(r.includes("pooja")) return "Living Room"
+ if(r.includes("mandir")) return "Living Room"
+ if(r.includes("staircase")) return "Living Room"
+ if(r.includes("stairs")) return "Living Room"
+  if(r.includes("stair")) return "Living Room"
+ if(r.includes("drawing")) return "Living Room"
+if(r.includes("dining")) return "Living Room"
+if(r.includes("foyer")) return "Living Room"
+ if(r.includes("entrance")) return "Living Room"
+if(r.includes("washroom")) return "Bathroom"
+ if(r.includes("utility")) return "Balcony"
+  if(r.includes("balcony")) return "Balcony"
+  if(r.includes("terrace")) return "Balcony" 
 return room // exact match fallback
 }
 function getRoomQuestions(room){
@@ -309,9 +416,9 @@ const roomQuestions=[
 "Are existing walls in plumb/line and level? Capture room diagonals in measurement section", 
 "Is there level difference in the true ceiling?Capture floor to ceiling dimesions in measurement section",
 "Are there any issues with the existing false ceiling that require removal and replacement?",                   
-"Are there visible undulations or uneven surface on the true ceiling?Mention treatment required in comments",
+ "Are there visible undulations or uneven surface on the true ceiling?Take photo with annotation",
 "Are there any utilities (sprinkler pipes, plumbing line, ducts) or cross beams running on the ceiling? Capture the beam bottom to floor mesurement(in mm), Sprinkler head to Floor measurement(in mm) in mesurements section",
-"Is there any evidence of water leaks or moisture damage on the existing true ceiling?Mark on the layout as well and inform Cx",                    
+ "Is there any evidence of water leaks or moisture damage on the existing true ceiling?Take photo with annotation",                    
 "Are the existing doors and door frame in good condition?",
 "Do we have sufficient opening available for furniture movement/shifting?Capture door height and width in measurement section",  
 "Are the existing windows and window frames in good condition?",
@@ -334,12 +441,12 @@ const roomQuestions=[
 const wallQuestions=["Is the wall a load-bearing wall/mivan construction/sheer wall?Mark in the structural layout as well",
 "Is the wall dry wall or gypsum wall?Mark in the structural layout as well",
 "Are there niches present?Mark in the structural layout as well",                     
-"Are there major cracks that require structural repair?Mark in the structural layout as well",
-"Are there hairline crack/minor cracks/loose plaster requiring re plastering?? Mark in the structural layout as well",
-"Does the existing wall surface have undulations or uneven surface?Capture mesurements in measurement section",
-"Are there evidence of water seepage or dampness that require waterproofing treatment? Mark on the structural layout as well and inform Cx",
+"Are there niches present?Please take photo with annotation",                     
+"Are there major cracks that require structural repair?Please take photo with annotation",
+"Are there hairline crack/minor cracks/loose plaster requiring re plastering?? Please take photo with annotation",
+"Are there evidence of water seepage or dampness that require waterproofing treatment?Please take photo with annotation",
 "Is there a suitable location for core cut available?",
-"Are existing switches and sockets in working condition?Capture wall wise modules and configuration in the comments and mark on layout",
+"Are existing switches and sockets in working condition?Mark modules and configuration on layout",
 "Is there a AC point(low side works) provided?",
 "Can split AC be installed post false ceiling w/o pockets? Capture Wall wise Door/Window Soffit to Ceiling measurement in mesurement section",
 "Is panelling/pelmet required to be done for AC installation?",
