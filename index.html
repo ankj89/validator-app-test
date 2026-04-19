@@ -175,33 +175,20 @@ const measurementFields = [
 {label:"WP2 Corner 2 (EW->WW)", key:"wp2_c2"},
 
 /* WALL CENTER (1200mm) */
-{label:"NW Center (offset)", key:"NW_M"},
-{label:"EW Center (offset)", key:"EW_M"},
-{label:"SW Center (offset)", key:"SW_M"},
-{label:"WW Center (offset)", key:"WW_M"},
+
 
 /* WALL UPPER (~1800mm) */
-{label:"NW Upper (offset)", key:"NW_U"},
-{label:"EW Upper (offset)", key:"EW_U"},
-{label:"SW Upper (offset)", key:"SW_U"},
-{label:"WW Upper (offset)", key:"WW_U"},
+
 
 /* CEILING UTILITIES */
 {label:"Beam Bottom to Floor (mm)", key:"beamFloor"},
 {label:"Sprinkler Head to Floor (mm)", key:"sprinklerFloor"},
 
 /* SOFFIT (WALL-WISE) */
-{label:"Door Soffit to Ceiling - NW", key:"doorsoffitNW"},
-{label:"Door Soffit to Ceiling - EW", key:"doorsoffitEW"},
-{label:"Door Soffit to Ceiling - SW", key:"doorsoffitSW"},
-{label:"Door Soffit to Ceiling - WW", key:"doorsoffitWW"},
+
 /* SUNKUN SLAB */
 {label:"Sunken slab depth", key:"sunkslabdepth"},
 /* WINDOW SOFFIT */
-{label:"Window Soffit to Ceiling - NW", key:"winSoffitNW"},
-{label:"Window Soffit to Ceiling - EW", key:"winSoffitEW"},
-{label:"Window Soffit to Ceiling - SW", key:"winSoffitSW"},
-{label:"Window Soffit to Ceiling - WW", key:"winSoffitWW"}
 
   
 ]
@@ -1083,6 +1070,8 @@ roomSection.appendChild(div)
 /* 🔥 MEASUREMENT SECTION */
 let measureSection=createAccordion("Measurement Section")
 
+
+ 
 let m = r.measurement || {}
 r.measurement = m
 
@@ -1112,6 +1101,34 @@ return div
 measurementFields.forEach(f=>{
 measureSection.appendChild(createInput(f.label,f.key))
 })
+// 🔥 DYNAMIC WALL MEASUREMENTS BASED ON ELEVATIONS
+
+let elevations = getElevations(room)
+
+elevations.forEach(e=>{
+
+// CENTER
+measureSection.appendChild(
+    createInput(`${e} Center (offset)`, `${e}_M`)
+)
+
+// UPPER
+measureSection.appendChild(
+    createInput(`${e} Upper (offset)`, `${e}_U`)
+)
+
+// DOOR SOFFIT
+measureSection.appendChild(
+    createInput(`Door Soffit to Ceiling - ${e}`, `doorsoffit_${e}`)
+)
+
+// WINDOW SOFFIT
+measureSection.appendChild(
+    createInput(`Window Soffit to Ceiling - ${e}`, `winSoffit_${e}`)
+)
+
+})
+ 
 /* 🔥 PHOTO SECTION (ADVANCED) */
 let photoSection=createAccordion("Site Photographs")
 photoSection.setAttribute("data-section","photo")
@@ -1274,6 +1291,17 @@ let row = {
 measurementFields.forEach(f=>{
 row[f.key] = m[f.key] || ""
 })
+
+// 🔥 ADD ELEVATION BASED MEASUREMENTS
+
+let elevations = data.rooms[room].elevations || []
+
+elevations.forEach(e=>{
+row[`${e}_M`] = m[`${e}_M`] || ""
+row[`${e}_U`] = m[`${e}_U`] || ""
+row[`doorsoffit_${e}`] = m[`doorsoffit_${e}`] || ""
+row[`winSoffit_${e}`] = m[`winSoffit_${e}`] || ""
+}) 
 
 measureRows.push(row)
 
