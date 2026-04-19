@@ -149,8 +149,6 @@ const societyQuestions = [
  
 ];
   
-const walls=["NW","EW","SW","WW"]
-/* 🔥 MEASUREMENT CONFIG */
 
 const measurementFields = [
 /* 🔥 NEW ADDITIONS */
@@ -268,7 +266,7 @@ const questionConfig = {
 "Are there major cracks that require structural repair?Please take photo with annotation",
 "Are there hairline crack/minor cracks/loose plaster requiring re plastering?? Please take photo with annotation",
 "Are there evidence of water seepage or dampness that require waterproofing treatment?Please take photo with annotation",
-"Does the existing wall surface have undulations or uneven surface?,
+"Does the existing wall surface have undulations or uneven surface?",
 "Is there a suitable location for core cut available?",
 "Are existing switches and sockets in working condition?Mark modules and configuration on layout",
 "Is there a AC point(low side works) provided?",
@@ -506,17 +504,21 @@ if(!data){
 function normalizeData(){
 if(!data.rooms)data.rooms={}
 defaultRooms.forEach(r=>{
-if(!data.rooms[r])data.rooms[r]={room:{},wall:{},wallSel:{},measurement:{},photos: {
-  "NW": [],
-  "EW": [],
-  "SW": [],
-  "WW": [],
-  "Ceiling": [],
-  "Floor": []
-}}
-})
+if(!data.rooms[r])data.rooms[r]={
+    room:{},
+    wall:{},
+    wallSel:{},
+    measurement:{},
+    elevations:[], // 🔥 ADD
+    photos:{
+        "Ceiling": [],
+        "Floor": []
+    }
 }
+})
 normalizeData()
+
+ 
 function ensureValidationMeta(){
     if(!data.validationMeta){
         data.validationMeta = {
@@ -527,7 +529,42 @@ function ensureValidationMeta(){
         }
     }
 }  
+ 
+function getElevations(room){
 
+let r = data.rooms[room]
+
+if(!r.elevations || !r.elevations.length){
+
+let input = prompt("Enter elevation numbers (comma separated)\nExample: E5,E6,E7,E8")
+
+if(input){
+
+r.elevations = input.split(",").map(x=>{
+let val = x.trim().toUpperCase()
+if(!val.startsWith("E")) val = "E" + val
+return val
+})
+
+}else{
+r.elevations = ["E1","E2","E3","E4"]
+}
+
+/* 🔥 CRITICAL: INIT PHOTO BUCKETS */
+if(!r.photos) r.photos = {}
+
+r.elevations.forEach(e=>{
+    if(!r.photos[e]) r.photos[e] = []
+})
+
+saveData()
+}
+
+return r.elevations
+}
+
+
+ 
 function saveData(){
 let size = new Blob([JSON.stringify(data)]).size / (1024*1024)
 
@@ -899,10 +936,17 @@ if(data.validationMeta?.ended){
     alert("Validation completed. Editing disabled.")
     return
 }
- if(!data.rooms[room]){
+if(!data.rooms[room]){
     data.rooms[room] = {
-        room:{},wall:{},wallSel:{},measurement:{},
-        photos:{NW:[],EW:[],SW:[],WW:[],Ceiling:[],Floor:[]}
+        room:{},
+        wall:{},
+        wallSel:{},
+        measurement:{},
+        elevations:[], // 🔥 ADD
+        photos:{
+            Ceiling:[],
+            Floor:[]
+        }
     }
 } 
 const r=data.rooms[room]
@@ -910,6 +954,10 @@ renderTabs(room)
 
 const container=document.getElementById("roomForm")
 container.innerHTML=""
+ let elevInfo = document.createElement("div")
+elevInfo.className = "summaryBox"
+elevInfo.innerHTML = `<b>Elevations:</b> ${getElevations(room).join(", ")}`
+container.appendChild(elevInfo)
 let progress = calculateProgress(room)
 
 let progressDiv = document.createElement("div")
@@ -964,7 +1012,9 @@ scrollToNext(div)
 let wallBox=document.createElement("div")
 wallBox.className="wallBox"
 
-walls.forEach(w=>{
+let elevations = getElevations(room)
+
+elevations.forEach(w=>{
 let cb=document.createElement("input")
 cb.type="checkbox"
 let arr=r.wallSel[q]||[]
@@ -1502,20 +1552,17 @@ let name = prompt("Room name")
 if(!name) return
 
 if(!data.rooms[name]){
-    data.rooms[name]={
-        room:{},
-        wall:{},
-        wallSel:{},
-        measurement:{},
-        photos:{
-            "NW":[],
-            "EW":[],
-            "SW":[],
-            "WW":[],
-            "Ceiling":[],
-            "Floor":[]
-        }
+  data.rooms[name]={
+    room:{},
+    wall:{},
+    wallSel:{},
+    measurement:{},
+    elevations:[], // 🔥 ADD
+    photos:{
+        Ceiling:[],
+        Floor:[]
     }
+}
 }
 
 roomOrder.push(name)
@@ -1840,7 +1887,9 @@ let wasOpen = photoSection && photoSection.style.display === "block"
 /* CLEAR */
 photoSection.innerHTML = ""
 
-const surfaces = ["NW","EW","SW","WW","Ceiling","Floor"]
+let elevations = data.rooms[room].elevations || []
+
+const surfaces = [...elevations, "Ceiling", "Floor"]
 
 surfaces.forEach(surface=>{
 
