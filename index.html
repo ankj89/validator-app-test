@@ -648,8 +648,8 @@ if(!pidVal || !cxVal || !cityVal){
 
     renderAppSections()
     renderSociety()
-    renderTabs(defaultRooms[0])
-    openRoom(defaultRooms[0])
+    renderTabs(null) // just show tabs, no auto open
+document.getElementById("roomForm").innerHTML = "<div class='summaryBox'>Select a room to start</div>"
 }
 async function endValidation(){
 await new Promise(r => setTimeout(r, 300))
@@ -828,7 +828,7 @@ const container = document.getElementById("roomTabs")
 
 container.innerHTML = roomOrder.map(r=>`
 <span class="roomTab" 
-style="${r===activeRoom ? 'background:#1e3d8f;color:white' : ''}">
+style="${activeRoom && r===activeRoom ? 'background:#1e3d8f;color:white' : ''}">
     
 <span onclick="openRoom('${r}')">${r}</span>
 
@@ -880,6 +880,7 @@ saveData()
 renderTabs(newName)
 openRoom(newName)
 }
+ 
 function deleteRoom(room){
 
 if(!confirm("Delete this room?")) return
@@ -2194,8 +2195,8 @@ if(data.validationMeta?.started){
 
     renderAppSections()
     renderSociety()
-    renderTabs(roomOrder[0])
-    openRoom(roomOrder[0])
+    renderTabs(null)
+document.getElementById("roomForm").innerHTML = "<div class='summaryBox'>Select a room to continue</div>"
 
 }else{
 
