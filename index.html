@@ -986,7 +986,7 @@ store.delete(id)
 
   
 function generateExcel(){
-
+saveData()
 if (!data.validationMeta) data.validationMeta = {}
 
 data.validationMeta.endTime = new Date().toLocaleString()
@@ -1002,7 +1002,7 @@ photos:{NW:[],EW:[],SW:[],WW:[],Ceiling:[],Floor:[]}
 }
 })
 
-saveData()
+
 
 /* =========================
    🔴 TAB 1: VALIDATION DATA (LEGACY FORMAT)
