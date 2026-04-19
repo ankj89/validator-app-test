@@ -166,13 +166,13 @@ const measurementFields = [
 {label:"Room Diagonal 2 (mm)", key:"diag2"},
 /* Opp wall pair */
 /* ORTHOGONALITY */
-{label:"WP1 Corner 1 (NW->SW)", key:"wp1_c1"},
-{label:"WP1 Center (NW->SW)", key:"wp1_mid"},
-{label:"WP1 Corner 2 (NW->SW)", key:"wp1_c2"},
+{label:"WP1 Corner 1", key:"wp1_c1"},
+{label:"WP1 Center", key:"wp1_mid"},
+{label:"WP1 Corner 2", key:"wp1_c2"},
 
-{label:"WP2 Corner 1 (EW->WW)", key:"wp2_c1"},
-{label:"WP2 Center (EW->WW)", key:"wp2_mid"},
-{label:"WP2 Corner 2 (EW->WW)", key:"wp2_c2"},
+{label:"WP2 Corner 1", key:"wp2_c1"},
+{label:"WP2 Center", key:"wp2_mid"},
+{label:"WP2 Corner 2", key:"wp2_c2"},
 
 /* WALL CENTER (1200mm) */
 
@@ -1104,6 +1104,40 @@ measureSection.appendChild(createInput(f.label,f.key))
 // 🔥 DYNAMIC WALL MEASUREMENTS BASED ON ELEVATIONS
 
 let elevations = getElevations(room)
+
+/* 🔥 SHOW PAIR INFO */
+if(elevations.length >= 4){
+
+let pairInfo = document.createElement("div")
+pairInfo.className = "summaryBox"
+
+pairInfo.innerHTML = `
+<b>Orthogonal Measurement:</b><br>
+WP1: ${elevations[0]} ↔ ${elevations[2]}<br>
+WP2: ${elevations[1]} ↔ ${elevations[3]}
+`
+
+measureSection.appendChild(pairInfo)
+}
+
+/* 🔥 RENDER MEASUREMENTS WITH DYNAMIC LABELS */
+measurementFields.forEach(f=>{
+
+let label = f.label
+
+// 🔥 MODIFY WP LABELS ONLY
+if(f.key.startsWith("wp1") && elevations.length >= 4){
+label = `${f.label} (${elevations[0]} ↔ ${elevations[2]})`
+}
+
+if(f.key.startsWith("wp2") && elevations.length >= 4){
+label = `${f.label} (${elevations[1]} ↔ ${elevations[3]})`
+}
+
+measureSection.appendChild(createInput(label, f.key))
+
+})
+ 
 
 elevations.forEach(e=>{
 
