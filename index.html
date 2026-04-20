@@ -608,7 +608,19 @@ if(size > 10){
 }
  
 if(!db){
-    console.warn("DB not ready — skipping save")
+
+    console.warn("DB not ready — retrying save")
+
+    setTimeout(()=>{
+
+        if(db){
+            saveData()
+        }else{
+            alert("⚠️ App storage not ready.\nPlease wait 2 seconds and continue.\nDo NOT close app.")
+        }
+
+    }, 500)
+
     return
 }
 data.project = {
@@ -971,7 +983,7 @@ if(data.validationMeta?.ended){
     alert("Validation completed. Editing disabled.")
     return
 }
- let elevations = getElevations(room)
+
 if(!data.rooms[room]){
     data.rooms[room] = {
         room:{},
@@ -986,6 +998,8 @@ if(!data.rooms[room]){
     }
 } 
 const r=data.rooms[room]
+let elevations = getElevations(room)
+ 
 renderTabs(room)
 
 const container=document.getElementById("roomForm")
@@ -1090,7 +1104,7 @@ textarea.oninput=()=>{
 div.append(label,toggle,wallBox,textarea)
 
 wallSection.appendChild(div)
-
+ })
 
 /* ROOM */
 let roomSection=createAccordion("Room Questions")
@@ -1216,10 +1230,6 @@ let photoSection=createAccordion("Site Photographs")
 photoSection.setAttribute("data-section","photo")
 
 refreshPhotoSection(room) 
-
-
-
-  
 }
 
 function savePhotoToDB(id, dataURL){
@@ -2044,7 +2054,7 @@ btn.onclick=()=>{
 
 let currentCount = (r.photos[surface] || []).length
 
-if(currentCount >= 10){
+if(currentCount >= 5){
     alert("Try to restrict to 5 photos per surface")
     return
 }
@@ -2284,8 +2294,21 @@ window.onbeforeunload = function () {
 
 document.addEventListener("DOMContentLoaded", async ()=>{
 
+let statusBar = document.createElement("div")
+statusBar.id = "dbStatus"
+statusBar.innerText = "Initializing storage..."
+statusBar.style.background = "#ffc107"
+statusBar.style.color = "#000"
+statusBar.style.padding = "6px"
+statusBar.style.textAlign = "center"
+document.body.prepend(statusBar)
+
 startVersionWatcher()
 await initDB()
+document.getElementById("dbStatus").innerText = "Storage ready"
+document.getElementById("dbStatus").style.background = "#28a745"
+document.getElementById("dbStatus").style.color = "#fff"
+ 
 if(!db){
     alert("Storage initialization failed. Reload app.")
     return
