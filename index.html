@@ -43,8 +43,11 @@ button{padding:8px 12px;border:none;background:#1e3d8f;color:white;border-radius
 .accordionContent{display:none;padding-top:10px}
 
 .questionBlock{
-  display:flex;
-  flex-direction:column;
+  padding:8px;
+  border-radius:6px;
+  margin-bottom:8px;
+  width:100%;
+  box-sizing:border-box;
 }
 .statusAnswered{background:#e6f7e6}
 .statusPending{background:#ffe6e6}
@@ -56,6 +59,8 @@ button{padding:8px 12px;border:none;background:#1e3d8f;color:white;border-radius
 
 /* 🔥 TOGGLE */
 .toggleGroup{
+  display:flex;     /* 🔥 ADD BACK */
+  gap:6px;
   flex-wrap:wrap;
 }
 .toggleBtn{padding:6px 10px;border:1px solid #ccc;border-radius:6px;cursor:pointer;background:#fff}
@@ -1087,7 +1092,7 @@ roomSection.appendChild(div)
 /* 🔥 MEASUREMENT SECTION */
 let measureSection=createAccordion("Measurement Section")
 
-
+let elevations = getElevations(room)   // 🔥 MISSING LINE (CRITICAL FIX)
  
 let m = r.measurement || {}
 r.measurement = m
@@ -1970,7 +1975,10 @@ let r = data.rooms[room]
 /* GET PHOTO SECTION */
 let photoSection = document.querySelector("[data-section='photo']")
 
-if(!photoSection) return
+if(!photoSection){
+    console.warn("Photo section not ready")
+    return
+}
 
 /* PRESERVE OPEN STATE */
 let wasOpen = photoSection && photoSection.style.display === "block"
