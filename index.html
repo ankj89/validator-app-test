@@ -195,7 +195,7 @@ const measurementFields = [
 {label:"Floor to Ceiling - Corner 2 (mm)", key:"fc2"},
 {label:"Floor to Ceiling - Corner 3 (mm)", key:"fc3"},
 {label:"Floor to Ceiling - Corner 4 (mm)", key:"fc4"},
-{label:"Floor to Ceiling - Cente (mm)", key:"fc5"},
+{label:"Floor to Ceiling - Center (mm)", key:"fc5"},
 
 /* ROOM DIAGONALS */
 {label:"Room Diagonal 1 (mm)", key:"diag1"},
@@ -414,7 +414,7 @@ if(questionConfig[type]?.room){
     return questionConfig[type].room
 }
 
-return roomQuestions // fallback (your full list)
+return roomQuestions || [] // fallback (your full list)
 }
 
 function getWallQuestions(room){
@@ -462,8 +462,7 @@ const roomQuestions=[
 ]
 const wallQuestions=["Is the wall a load-bearing wall/mivan construction/sheer wall?Mark in the structural layout as well",
 "Is the wall dry wall or gypsum wall?Mark in the structural layout as well",
-"Are there niches present?Mark in the structural layout as well",                     
-"Are there niches present?Please take photo with annotation",                     
+"Are there niches present?Please take photo with annotation",                                         
 "Are there major cracks that require structural repair?Please take photo with annotation",
 "Are there hairline crack/minor cracks/loose plaster requiring re plastering?? Please take photo with annotation",
 "Are there evidence of water seepage or dampness that require waterproofing treatment?Please take photo with annotation",
@@ -565,21 +564,25 @@ let r = data.rooms[room]
 
 if(!r.elevations || !r.elevations.length){
 
-let input = prompt("Enter elevation numbers (comma separated)\nExample: 5,6,7,8. Put only numbers")
+let input = prompt("Enter elevation numbers (comma separated)\nExample: 5,6,7,8")
 
-if(input){
+if(!input){
+    r.elevations = ["E1","E2","E3","E4"]
+}else{
 
 let arr = input.split(",").map(x=>{
-let val = x.trim().toUpperCase()
+let val = x.trim()
+if(!val) return null
 if(!val.startsWith("E")) val = "E" + val
-return val
-})
+return val.toUpperCase()
+}).filter(Boolean)
 
-// 🔥 REMOVE DUPLICATES
+if(arr.length < 4){
+    alert("Minimum 4 elevations required")
+    return getElevations(room)   // retry
+}
+
 r.elevations = [...new Set(arr)]
-
-}else{
-r.elevations = ["E1","E2","E3","E4"]
 }
 
 /* 🔥 INIT PHOTO BUCKETS */
@@ -605,8 +608,7 @@ if(size > 10){
 }
  
 if(!db){
-    console.warn("DB not ready, retrying...")
-    setTimeout(saveData, 300)
+    console.warn("DB not ready — skipping save")
     return
 }
 data.project = {
@@ -969,6 +971,7 @@ if(data.validationMeta?.ended){
     alert("Validation completed. Editing disabled.")
     return
 }
+ let elevations = getElevations(room)
 if(!data.rooms[room]){
     data.rooms[room] = {
         room:{},
@@ -1045,7 +1048,7 @@ scrollToNext(div)
 let wallBox=document.createElement("div")
 wallBox.className="wallBox"
 
-let elevations = getElevations(room)
+
 
 elevations.forEach(w=>{
 let btn = document.createElement("div")
@@ -1073,18 +1076,21 @@ saveData()
 }
 
 wallBox.appendChild(btn)
-
+})
+ 
+// ✅ AFTER LOOP
 let textarea=document.createElement("textarea")
 textarea.value=r.wall[q+"-c"]||""
 
 textarea.oninput=()=>{
-r.wall[q+"-c"]=textarea.value
-saveData()
+   r.wall[q+"-c"]=textarea.value
+   saveData()
 }
 
 div.append(label,toggle,wallBox,textarea)
+
 wallSection.appendChild(div)
-})
+
 
 /* ROOM */
 let roomSection=createAccordion("Room Questions")
@@ -1117,7 +1123,7 @@ roomSection.appendChild(div)
 /* 🔥 MEASUREMENT SECTION */
 let measureSection=createAccordion("Measurement Section")
 
-let elevations = getElevations(room)   // 🔥 MISSING LINE (CRITICAL FIX)
+/*let elevations = getElevations(room) */  // 🔥 MISSING LINE (CRITICAL FIX)
  
 let m = r.measurement || {}
 r.measurement = m
@@ -1135,8 +1141,9 @@ input.type="number"
 input.placeholder="mm"
 input.value=m[key] || ""
 
-input.onchange=()=>{
-m[key]=parseFloat(input.value) || ""
+input.oninput=()=>{
+let val = parseFloat(input.value)
+m[key] = isNaN(val) ? "" : val
 saveData()
 }
 
@@ -1412,7 +1419,12 @@ cx = cx.replace(/[^a-zA-Z0-9]/g, "_")
 
 let fileName = `${pid}_${cx}_site_validation_data.xlsx`
 
-XLSX.writeFile(wb, fileName)
+try{
+    XLSX.writeFile(wb, fileName)
+}catch(e){
+    console.error(e)
+    alert("Excel generation failed. Try again.")
+}
 
 /* =========================
    🔴 FLAGS
@@ -1532,7 +1544,7 @@ let finalImg = canvas.toDataURL("image/jpeg", 0.7)
 let id = "img_" + Date.now()
 
 await savePhotoToDB(id, finalImg)
-approxSizeMB += finalImg.length / (1024*1024)
+approxSizeMB += (finalImg.length * 0.75) / (1024*1024)
 localStorage.setItem("dbSizeMB", approxSizeMB)
 
 if(index !== null){
@@ -1783,7 +1795,7 @@ input.type="text"
 
 input.id=q.key
 input.value=(data.constraints && data.constraints[q.key]) || ""
-input.onchange=saveData
+input.oninput=saveData
 
 div.append(label,input)
 container.appendChild(div)
@@ -1965,7 +1977,7 @@ catch(e){
     input.accept = "image/*"
     input.capture = "environment"
 
-    input.onchange = function(e){
+    input.oninput = function(e){
         let file = e.target.files[0]
         if(file){
             processImage(file, surface, room)
@@ -1984,7 +1996,7 @@ catch(e){
     input.accept = "image/*"
     input.capture = "environment"
 
-    input.onchange = function(e){
+    input.oninput = function(e){
         let file = e.target.files[0]
         if(file){
             processImage(file, surface, room)
@@ -2028,7 +2040,17 @@ block.appendChild(title)
 /* ADD BUTTON */
 let btn=document.createElement("button")
 btn.innerText="Add Photo"
-btn.onclick=()=>openCamera(surface, room)
+btn.onclick=()=>{
+
+let currentCount = (r.photos[surface] || []).length
+
+if(currentCount >= 10){
+    alert("Try to restrict to 5 photos per surface")
+    return
+}
+
+openCamera(surface, room)
+}
 block.appendChild(btn)
 
 /* IMAGE LIST */
@@ -2256,13 +2278,7 @@ window.onbeforeunload = function () {
         return "Validation in progress. Are you sure?"
     }
 }
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js")
-      .then(reg => console.log("SW registered"))
-      .catch(err => console.log("SW failed", err));
-  });
-}
+
 
  
 
@@ -2270,6 +2286,10 @@ document.addEventListener("DOMContentLoaded", async ()=>{
 
 startVersionWatcher()
 await initDB()
+if(!db){
+    alert("Storage initialization failed. Reload app.")
+    return
+} 
 // 🔥 iOS SAFE HISTORY INIT
 setTimeout(()=>{
     history.pushState(null, "")
