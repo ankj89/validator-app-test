@@ -12,7 +12,15 @@
 <style>
 body{font-family:Arial;margin:0;background:#f4f6fb}
 header{background:#1e3d8f;color:white;padding:14px;font-size:18px}
-.container{padding:14px;max-width:1200px;margin:auto}
+.container{
+  padding:14px;
+  max-width:1200px;
+  margin:auto;
+  width:100%;               /* 🔥 FIX */
+}
+ *{
+  min-width:0;   /* 🔥 iOS flex bug fix */
+}
 .card{background:white;padding:16px;margin-bottom:14px;border-radius:8px;border:1px solid #ddd}
 .grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 @media(max-width:900px){.grid{grid-template-columns:1fr}}
@@ -25,12 +33,23 @@ button{padding:8px 12px;border:none;background:#1e3d8f;color:white;border-radius
 
 .roomTab{display:inline-block;padding:8px 12px;border:1px solid #ccc;margin:3px;border-radius:6px;cursor:pointer}
 
-.wallBox{display:flex;gap:12px;margin-top:6px}
+.wallBox{
+  display:flex;
+  gap:12px;
+  margin-top:6px;
+  flex-wrap:wrap;           /* 🔥 FIX */
+}
 
 .accordion{cursor:pointer;background:#eef2ff;padding:10px;border-radius:6px;margin-top:10px}
 .accordionContent{display:none;padding-top:10px}
 
-.questionBlock{padding:8px;border-radius:6px;margin-bottom:8px}
+.questionBlock{
+  padding:8px;
+  border-radius:6px;
+  margin-bottom:8px;
+  width:100%;               /* 🔥 FIX */
+  box-sizing:border-box;    /* 🔥 FIX */
+}
 .statusAnswered{background:#e6f7e6}
 .statusPending{background:#ffe6e6}
 
@@ -1098,8 +1117,6 @@ return div
 }
 
 // 🔥 DYNAMIC WALL MEASUREMENTS BASED ON ELEVATIONS
-
-let elevations = getElevations(room)
 
 /* 🔥 SHOW PAIR INFO */
 if(elevations.length >= 4){
