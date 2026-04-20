@@ -480,29 +480,72 @@ let approxSizeMB = parseFloat(localStorage.getItem("dbSizeMB") || "0")
 let db
 let isCameraOpen = false
  let backPressTime = 0
+ 
 function initDB(){
+
 return new Promise((resolve, reject)=>{
-let request = indexedDB.open("SiteValidatorDB", 2) // version bump
 
-request.onupgradeneeded = function(e){
-db = e.target.result
+    let request = indexedDB.open("SiteValidatorDB", 2)
 
-if(!db.objectStoreNames.contains("photos")){
-db.createObjectStore("photos", { keyPath: "id" })
-}
+    let resolved = false   // 🔥 track success
 
-// ✅ NEW STORE
-if(!db.objectStoreNames.contains("appData")){
-db.createObjectStore("appData", { keyPath: "id" })
-}
-}
+    /* 🔴 UPGRADE */
+    request.onupgradeneeded = function(e){
+        db = e.target.result
 
-request.onsuccess = function(e){
-db = e.target.result
-resolve()
-}
+        if(!db.objectStoreNames.contains("photos")){
+            db.createObjectStore("photos", { keyPath: "id" })
+        }
 
-request.onerror = reject
+        if(!db.objectStoreNames.contains("appData")){
+            db.createObjectStore("appData", { keyPath: "id" })
+        }
+    }
+
+    /* ✅ SUCCESS */
+    request.onsuccess = function(e){
+        db = e.target.result
+        resolved = true
+        resolve()
+    }
+
+    /* ❌ ERROR */
+    request.onerror = function(e){
+        console.error("DB error", e)
+        alert("⚠️ Storage error. Reloading app...")
+        reject(e)
+        location.reload()
+    }
+
+    /* 🚫 BLOCKED (VERY IMPORTANT) */
+    request.onblocked = function(){
+        console.error("DB blocked")
+
+        alert(
+            "⚠️ App update detected.\n\n" +
+            "Please close all other tabs of this app and reload."
+        )
+
+        // 🔁 force reload after delay
+        setTimeout(()=>{
+            location.reload()
+        }, 2000)
+    }
+
+    /* ⏱️ FAILSAFE TIMEOUT (CRITICAL) */
+    setTimeout(()=>{
+        if(!resolved){
+            console.error("DB init timeout")
+
+            alert(
+                "⚠️ App storage not responding.\n\n" +
+                "Reloading app..."
+            )
+
+            location.reload()
+        }
+    }, 3000)
+
 })
 }
 
@@ -1006,7 +1049,7 @@ const container=document.getElementById("roomForm")
 container.innerHTML=""
  let elevInfo = document.createElement("div")
 elevInfo.className = "summaryBox"
-elevInfo.innerHTML = `<b>Elevations:</b> ${getElevations(room).join(", ")}`
+elevInfo.innerHTML = `<b>Elevations:</b> ${elevations.join(", ")}`
 container.appendChild(elevInfo)
 let progress = calculateProgress(room)
 
@@ -2055,7 +2098,7 @@ btn.onclick=()=>{
 let currentCount = (r.photos[surface] || []).length
 
 if(currentCount >= 5){
-    alert("Try to restrict to 5 photos per surface")
+    alert("Max 5 photos per surface")
     return
 }
 
@@ -2304,7 +2347,13 @@ statusBar.style.textAlign = "center"
 document.body.prepend(statusBar)
 
 startVersionWatcher()
-await initDB()
+try{
+    await initDB()
+}catch(e){
+    alert("Storage failed. Reloading...")
+    location.reload()
+    return
+}
 document.getElementById("dbStatus").innerText = "Storage ready"
 document.getElementById("dbStatus").style.background = "#28a745"
 document.getElementById("dbStatus").style.color = "#fff"
@@ -2403,11 +2452,13 @@ if ("serviceWorker" in navigator) {
             newWorker.onstatechange = () => {
 
                 if (newWorker.state === "activated") {
-                    console.log("New SW activated → reloading")
 
-                    // 🔥 FORCE HARD RELOAD
-                    window.location.reload()
-                }
+    if(db){
+        db.close()
+    }
+
+    window.location.reload()
+}
             }
         }
 
