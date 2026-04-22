@@ -1443,7 +1443,72 @@ measureRows.push(row)
 })
 
 let ws3 = XLSX.utils.json_to_sheet(measureRows)
-XLSX.utils.book_append_sheet(wb, ws3, "Measurements")
+XLSX.utils.book_append_sheet(wb, ws3, "Room Measurements")
+
+/* =========================
+   🔴 TAB 5: WALL MEASUREMENTS (NEW - CLEAN STRUCTURE)
+========================= */
+
+/* =========================
+   🔴 TAB 4: WALL MEASUREMENTS (NEW)
+========================= */
+
+let wallMeasureRows = []
+
+Object.keys(data.rooms).forEach(room=>{
+
+let m = data.rooms[room].measurement || {}
+let elevations = data.rooms[room].elevations || []
+
+elevations.forEach(e=>{
+
+// CENTER
+if(m[`${e}_M`] !== "" && m[`${e}_M`] !== undefined){
+wallMeasureRows.push({
+Room: room,
+Elevation: e,
+Parameter: "Center",
+Value: m[`${e}_M`]
+})
+}
+
+// UPPER
+if(m[`${e}_U`] !== "" && m[`${e}_U`] !== undefined){
+wallMeasureRows.push({
+Room: room,
+Elevation: e,
+Parameter: "Upper",
+Value: m[`${e}_U`]
+})
+}
+
+// DOOR SOFFIT
+if(m[`doorsoffit_${e}`]){
+wallMeasureRows.push({
+Room: room,
+Elevation: e,
+Parameter: "Door Soffit",
+Value: m[`doorsoffit_${e}`]
+})
+}
+
+// WINDOW SOFFIT
+if(m[`winSoffit_${e}`]){
+wallMeasureRows.push({
+Room: room,
+Elevation: e,
+Parameter: "Window Soffit",
+Value: m[`winSoffit_${e}`]
+})
+}
+
+})
+
+})
+
+let ws4 = XLSX.utils.json_to_sheet(wallMeasureRows)
+XLSX.utils.book_append_sheet(wb, ws4, "Wall Measurements")
+
 
 /* =========================
    🔴 TAB 4: SUMMARY
