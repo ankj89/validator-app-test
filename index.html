@@ -607,26 +607,27 @@ let r = data.rooms[room]
 
 if(!r.elevations || !r.elevations.length){
 
-let input = prompt("Enter elevation numbers (comma separated)\nExample: 5,6,7,8")
+let input = prompt(
+"Enter elevation names (comma separated)\nExample: 1-A, 1-B, Window, Entry"
+)
 
 if(!input){
-    r.elevations = ["E1","E2","E3","E4"]
-}else{
-
-let arr = input.split(",").map(x=>{
-let val = x.trim()
-if(!val) return null
-if(!val.startsWith("E")) val = "E" + val
-return val.toUpperCase()
-}).filter(Boolean)
-
-if(arr.length < 4){
-    alert("Minimum 4 elevations required")
-    return getElevations(room)   // retry
+    alert("Please enter at least 1 elevation")
+    return getElevations(room)
 }
 
+let arr = input
+.split(",")
+.map(x => x.trim())
+.filter(x => x)   // remove empty
+
+if(!arr.length){
+    alert("Invalid input")
+    return getElevations(room)
+}
+
+/* ✅ KEEP EXACT USER INPUT */
 r.elevations = [...new Set(arr)]
-}
 
 /* 🔥 INIT PHOTO BUCKETS */
 if(!r.photos) r.photos = {}
